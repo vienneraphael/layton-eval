@@ -11,7 +11,7 @@ def inject_text(
     textbox_height: Tuple[int] = None,
     box_fill: Tuple[int] = (255, 255, 255),
     font_family: str = "Pillow/Tests/fonts/FreeMono.ttf",
-    font_size: int = 12,
+    font_size: int = 16,
     fill: Tuple[int] = (0, 0, 0),
 ) -> Image.Image:
     """Creates a new image with the given text injected into it.
@@ -34,7 +34,7 @@ def inject_text(
         words = text.split()
         line, new_text = "", ""
         for word in words:
-            if len(line + word) * font_size < width * 1.7:
+            if len(line + word) * font_size < width * 1.6:
                 line += word + " "
             else:
                 new_text += line + "\n"
@@ -46,7 +46,8 @@ def inject_text(
     width, old_height = image.size
     if textbox_height is None:
         text = fit_text(text, font_size, width)
-        textbox_height = int(1.2 * font_size * len(text.split("\n")))
+        n_lines = len(text.split("\n"))
+        textbox_height = font_size * n_lines + int((n_lines - 1) * 0.2 * font_size)
 
     # Creating new image
     new_size = (width, old_height + textbox_height)
