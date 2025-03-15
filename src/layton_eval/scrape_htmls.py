@@ -50,7 +50,7 @@ def get_puzzle_description(soup: BeautifulSoup) -> t.List[str] | str:
         if str(current_element).startswith("<p>"):
             clean_content = ""
             for elem in current_element.contents:
-                if str(elem).startswith('''<a class="image"'''):
+                if ('''<a class="''' in str(elem) and 'image' in str(elem)) or 'img' in str(elem):
                     nodes_between_elements.append(current_element)
                     has_images = True
                 elif isinstance(elem, bs4.element.NavigableString):
@@ -120,7 +120,7 @@ def get_puzzle_hint(soup: BeautifulSoup, hint_type: t.Literal["1", "2", "3", "Sp
                         clean_content += c
                     elif str(c) == "<br/>":
                         clean_content += "\n"
-                    elif str(c).startswith("<img") or str(c).startswith("<a"):
+                    elif str(c).startswith("<img") or str(c).startswith("<a") or ('<a' in str(c) and 'image' in str(c)) or ('img' in str(c)):
                         continue
                     else:
                         clean_content += c.contents[0]
@@ -148,7 +148,7 @@ def get_puzzle_solution(soup: BeautifulSoup) -> str:
                     clean_content += elem
                 else:
                     for c in elem.contents:
-                        if str(c) != "<br/>" and not str(c).startswith("<img"):
+                        if str(c) != "<br/>" and "<img" not in str(c):
                             clean_content += c
             nodes_between_elements.append(clean_content)
         elif str(current_element).startswith("<dl>"):
@@ -222,31 +222,4 @@ if __name__ == "__main__":
         df["special_hint"].append(special_hint)
         df["solution"].append(solution)
     df = pd.DataFrame(df)
-    with pd.ExcelWriter(f"{ROOT_DIR}/layton-annotations.xlsx", engine="xlsxwriter") as writer:
-        workbook = writer.book
-        worksheet = workbook.add_worksheet()
-        img_col_index = df.columns.get_loc("img")
-        answer_img_col_index = df.columns.get_loc("answer_img")
-        for i, (answer_img_path, img_path, url) in enumerate(zip(df["answer_img"], df["img"], df["url"])):
-            if sizes[i] is not None:
-                width, height = sizes[i]
-                scale_x, scale_y = 350 / width, 350 / height
-            if answer_sizes[i] is not None:
-                answer_width, answer_height = answer_sizes[i]
-                answer_scale_x, answer_scale_y = 350 / answer_width, 350 / answer_height
-            if img_path is not None:
-                worksheet.insert_image(i + 1, img_col_index, img_path, {"x_scale": scale_x, "y_scale": scale_y})
-            if answer_img_path is not None:
-                worksheet.insert_image(
-                    i + 1, answer_img_col_index, answer_img_path, {"x_scale": answer_scale_x, "y_scale": answer_scale_y}
-                )
-            worksheet.set_row_pixels(i + 1, 350)
-            worksheet.write_url(i + 1, 4, url)
-        worksheet.set_column_pixels(img_col_index, img_col_index, 350)
-        worksheet.set_column_pixels(answer_img_col_index, answer_img_col_index, 350)
-        worksheet.set_column_pixels(2, 2, 1100)
-        worksheet.set_column_pixels(6, 9, 900)
-        worksheet.set_column_pixels(4, 4, 400)
-        worksheet.set_column_pixels(1, 1, 150)
-        worksheet.set_column_pixels(10, 10, 1000)
-        df.to_excel(writer, index=False, header=True, engine="xlsxwriter")
+    df.to_csv('data.csv')
