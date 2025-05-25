@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 from datasets import load_dataset
 
 tab1, tab2, tab3 = st.tabs(["Benchmark", "Data viz", "Data explorer"])
@@ -68,12 +69,80 @@ with tab1:
 
 with tab2:
 
-    dataset = load_dataset("cmenasse/layton")
-    df = dataset.to_pandas()
-    
-    # Show the table
+    @st.cache_data
+    def load_data():
+        dataset = load_dataset("cmenasse/layton",  data_files="layton_eval.csv")
+        if isinstance(dataset, dict):
+            dataset = list(dataset.values())[0]
+        return dataset
+
+    data = load_data()
+    df = data.to_pandas()
     st.dataframe(df)
-       
+
+    df = df[df["requires_game_engine"]==False]
+
+
+    st.write("For the purpose of this Benchmark, we filter out the riddles that require a game engine to be verified")
+
+
+    st.write("Number of riddles without game engine need:", len(df))
+    st.write("Number of riddles without image need:", len(df[df["is_description_sufficient"]==True]))
+    st.write("Number of riddles with image need:", len(df[df["is_description_sufficient"]==False]))
+
+
+    category_counts = df['category'].value_counts()
+    single_occurrences = category_counts[category_counts < 10].index
+    df['category_grouped'] = df['category'].apply(lambda x: 'Other' if x in single_occurrences else x)
+    grouped_counts = df['category_grouped'].value_counts().reset_index()
+    grouped_counts.columns = ['Category', 'Count']
+
+    fig1 = px.pie(
+        grouped_counts,
+        values='Count',
+        names='Category',
+        title='Categories',
+        hole=0.4  
+    )
+    st.plotly_chart(fig1, key="camembert")
+
+
+
+    counts = df['picarats'].value_counts().sort_index().reset_index()
+    counts.columns = ['Values', 'Count']
+    fig2 = px.bar(counts, x='Values', y='Count', title='Picarats distribution')
+    fig2.update_xaxes(tickmode='linear', tick0=0, dtick=10)
+    st.plotly_chart(fig2, key="picarats")
+
+
+    counts = {
+        '1': (df['first_hint'].notna().sum() / len(df)) * 100,
+        '2': (df['second_hint'].notna().sum() / len(df)) * 100,
+        '3': (df['third_hint'].notna().sum() / len(df)) * 100,
+        '4': (df['special_hint'].notna().sum() / len(df)) * 100,
+    }
+    counts_df = pd.DataFrame(list(counts.items()), columns=['Nb of hints', 'Percentage'])
+
+    fig3 = px.bar(
+        counts_df,
+        x='Nb of hints',
+        y='Percentage',
+        title='Riddles with at least n hints',
+        text='Percentage'
+    )
+
+    # Afficher les valeurs sur les barres
+    fig3.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+
+    # Adapter l'échelle Y
+    fig3.update_yaxes(range=[0, max(counts.values()) + 1])
+
+    # Afficher dans Streamlit
+    st.plotly_chart(fig3, key="hints", use_container_width=True)
+
+
+
+
 
 with tab3:
 

@@ -1,3 +1,4 @@
 datasets
 streamlit
 pandas
+plotly
