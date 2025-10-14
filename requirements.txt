@@ -359,8 +359,10 @@ urllib3==2.5.0
     # via requests
 virtualenv==20.34.0
     # via pre-commit
-watchdog==6.0.0 ; sys_platform != 'darwin'
-    # via streamlit
+watchdog==6.0.0
+    # via
+    #   layton-eval
+    #   streamlit
 wcwidth==0.2.14
     # via prompt-toolkit
 websockets==15.0.1
