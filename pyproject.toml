@@ -9,6 +9,7 @@ dependencies = [
     "ipykernel>=6.29.5",
     "polars>=1.24.0",
     "python-dotenv>=1.0.1",
+    "streamlit>=1.50.0",
 ]
 
 [dependency-groups]
