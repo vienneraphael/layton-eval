@@ -229,11 +229,15 @@ pydantic==2.12.0
     #   anthropic
     #   google-genai
     #   groq
+    #   layton-eval
     #   mistralai
     #   openai
+    #   pydantic-settings
     #   together
 pydantic-core==2.41.1
     # via pydantic
+pydantic-settings==2.11.0
+    # via layton-eval
 pydeck==0.9.1
     # via streamlit
 pygments==2.19.2
@@ -250,6 +254,7 @@ python-dotenv==1.1.1
     # via
     #   batchling
     #   layton-eval
+    #   pydantic-settings
 pytz==2025.2
     # via pandas
 pywin32==311 ; platform_python_implementation != 'PyPy' and sys_platform == 'win32'
@@ -353,6 +358,7 @@ typing-inspection==0.4.2
     # via
     #   mistralai
     #   pydantic
+    #   pydantic-settings
 tzdata==2025.2
     # via pandas
 urllib3==2.5.0
