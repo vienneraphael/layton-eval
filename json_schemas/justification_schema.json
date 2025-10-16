@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "justification": {
+      "description": "The justification for the answer.",
+      "title": "Justification",
+      "type": "string"
+    }
+  },
+  "required": [
+    "justification"
+  ],
+  "title": "Justification",
+  "type": "object"
+}
