@@ -8,15 +8,3 @@ You are given:
 Knowing all of this, your task is to extract, or generate the right justification explaining why the riddle answer is this one and not anything else.
 
 Here is the relevant data:
-
-# Riddle question
-{question}
-
-# Riddle context image
-{image}
-
-# Riddle simple answer
-{answer}
-
-# Riddle full solution
-{solution}

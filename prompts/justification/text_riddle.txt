@@ -1,0 +1,9 @@
+You're an expert at extracting a logic justification out of riddle data.
+You are given:
+- a riddle question: it represents the riddle setting.
+- a riddle answer: contains the answer in its simplest form, usually no explanation.
+- a riddle solution: contains the full answer, including possible justification.
+
+Knowing all of this, your task is to extract, or generate the right justification explaining why the riddle answer is this one and not anything else.
+
+Here is the relevant data:
