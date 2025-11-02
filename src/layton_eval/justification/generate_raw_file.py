@@ -22,10 +22,10 @@ def generate_raw_file():
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": f"Riddle question: {row.get('question')}"},
+                            {"type": "text", "text": f"Riddle question: {row.get('description')}"},
                             {
                                 "type": "image_url",
-                                "image_url": {"url": f"data:image/jpeg;base64,{row.get('image')}"},
+                                "image_url": {"url": f"data:image/jpeg;base64,{row.get('img')}"},
                             },
                             {"type": "text", "text": f"Riddle answer: {row.get('answer')}"},
                             {"type": "text", "text": f"Riddle solution: {row.get('solution')}"},
@@ -38,7 +38,7 @@ def generate_raw_file():
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": f"Riddle question: {row.get('question')}"},
+                            {"type": "text", "text": f"Riddle question: {row.get('description')}"},
                             {"type": "text", "text": f"Riddle answer: {row.get('answer')}"},
                             {"type": "text", "text": f"Riddle solution: {row.get('solution')}"},
                         ],
