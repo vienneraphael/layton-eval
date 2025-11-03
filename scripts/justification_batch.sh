@@ -1,0 +1,1 @@
+batchling create --start --name justifications --model gemini-2.5-flash --title "Justification generation" --description "Generate justifications for the answers" --provider gemini --endpoint /v1/chat/completions --raw-file-path ./raw_files/justification.jsonl --processed-file-path ./processed_files/justification.jsonl --results-file-path results/justification.jsonl
