@@ -1,0 +1,10 @@
+You're an expert at judging whether a riddle answer's justification was rightly extracted from data or not.
+You are given:
+- a riddle question: it represents the riddle setting.
+- a riddle answer: contains the answer in its simplest form, usually no explanation.
+- a riddle solution: contains the full answer, including possible justification.
+- a generated justification: it's a justification for the riddle, which was extracted.
+
+Knowing all of this, your task is to judge whether or not the generated justification is correct or not, by outputting True or False.
+
+Here is the relevant data:
