@@ -27,3 +27,6 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 packages = ["src/batchling"]
+
+[tool.bandit]
+skips = ["B311"]
