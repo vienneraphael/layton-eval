@@ -71,7 +71,7 @@ wheels = [
 [[package]]
 name = "batchling"
 version = "0.0.13"
-source = { registry = "https://pypi.org/simple" }
+source = { directory = "../batchling" }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
@@ -82,9 +82,29 @@ dependencies = [
     { name = "structlog" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/d7/0459aa73725bbdd279002870eb464e38cddddba05733256b44d230f295dd/batchling-0.0.13.tar.gz", hash = "sha256:6b7000dc4656a3cce86556d9474d0ced3c933ddb5c6cfb10a7ae465c6ab9849e", size = 18323, upload-time = "2025-11-03T04:56:46.279Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/c4/4ec1bbd18725bfc8d989c6919c19131d43eb0111f42b02e8beeb357777ee/batchling-0.0.13-py3-none-any.whl", hash = "sha256:73a0b3a66fd837c166bc7fb699fc7fedfe5314b552d8bab5db6179d8743bb8b3", size = 31252, upload-time = "2025-11-03T04:56:45.327Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "click", specifier = ">=8.3.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "platformdirs", specifier = ">=4.5.0" },
+    { name = "pydantic", specifier = ">=2.12.3" },
+    { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "sqlalchemy", specifier = ">=2.0.44" },
+    { name = "structlog", specifier = ">=25.5.0" },
+    { name = "typer", specifier = ">=0.20.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.11.0" },
+    { name = "ipykernel", specifier = ">=7.0.1" },
+    { name = "prek", specifier = ">=0.2.10" },
+    { name = "pyinstrument", specifier = ">=5.1.1" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "respx", specifier = ">=0.22.0" },
+    { name = "ruff", specifier = ">=0.14.2" },
 ]
 
 [[package]]
@@ -640,7 +660,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batchling", specifier = ">=0.0.13" },
+    { name = "batchling", directory = "../batchling" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "polars", specifier = ">=1.24.0" },
     { name = "ppi-python", specifier = ">=0.2.3" },
