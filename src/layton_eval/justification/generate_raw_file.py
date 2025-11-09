@@ -15,6 +15,7 @@ def generate_raw_file():
             raw_request = {
                 "system_prompt": "",
                 "messages": [],
+                "max_tokens": 1000,
             }
             if row.get("split") == "vlm":
                 raw_request["system_prompt"] = image_prompt
