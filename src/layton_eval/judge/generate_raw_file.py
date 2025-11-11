@@ -7,13 +7,13 @@ from layton_eval.utils import load_txt
 
 
 def generate_raw_file():
-    df_justification = pl.read_ndjson(settings.root_dir / "results" / "justification.jsonl")[
+    df_justification = pl.read_ndjson(settings.root_dir / "results" / "justification_claude.jsonl")[
         "custom_id", "answer"
     ]
     df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl")
     image_prompt = load_txt(settings.root_dir / "prompts" / "judge" / "visual_riddle.txt")
     text_prompt = load_txt(settings.root_dir / "prompts" / "judge" / "text_riddle.txt")
-    with open(settings.root_dir / "raw_files" / "judge.jsonl", "w") as f:
+    with open(settings.root_dir / "raw_files" / "judge_gemini.jsonl", "w") as f:
         for row_justification in df_justification.iter_rows(named=True):
             idx = int(row_justification.get("custom_id").split("-")[-1])
             row = df[idx].to_dicts()[0]
