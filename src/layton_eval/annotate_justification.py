@@ -29,7 +29,7 @@ def save_annotation(row_data):
     annotations_dir = settings.root_dir / "annotations" / "justification"
     annotations_dir.mkdir(exist_ok=True)
 
-    annotations_file = annotations_dir / "justification.jsonl"
+    annotations_file = annotations_dir / "justification_claude.jsonl"
 
     with open(annotations_file, "a") as f:
         json.dump(row_data, f)
@@ -38,7 +38,7 @@ def save_annotation(row_data):
 
 def read_annotated_ids():
     annotations_dir = settings.root_dir / "annotations" / "justification"
-    annotations_file = annotations_dir / "justification.jsonl"
+    annotations_file = annotations_dir / "justification_claude.jsonl"
     if not annotations_file.exists():
         return []
     with open(annotations_file, "r") as f:
@@ -47,7 +47,7 @@ def read_annotated_ids():
 
 def load_generated_justifications() -> list[str]:
     generated_justifications_dir = settings.root_dir / "results"
-    generated_justifications_file = generated_justifications_dir / "justification.jsonl"
+    generated_justifications_file = generated_justifications_dir / "justification_claude.jsonl"
     if not generated_justifications_file.exists():
         return []
     with open(generated_justifications_file, "r") as f:
