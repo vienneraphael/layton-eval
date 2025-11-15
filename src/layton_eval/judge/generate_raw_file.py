@@ -27,7 +27,10 @@ def generate_raw_file():
             ]
             if row.get("split") == "vlm":
                 content.append(
-                    {"type": "image_url","image_url": {"url": f"data:image/jpeg;base64,{row.get('img')}"}},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{row.get('img')}"},
+                    },
                 )
             if row.get("first_hint"):
                 content.append(
@@ -57,8 +60,15 @@ def generate_raw_file():
                     "text": f"Generated justification: {row_justification.get('answer')}",
                 }
             )
-            raw_request["system_prompt"] = image_prompt if row.get("split") == "vlm" else text_prompt
-            raw_request["messages"] = content
+            raw_request["system_prompt"] = (
+                image_prompt if row.get("split") == "vlm" else text_prompt
+            )
+            raw_request["messages"] = [
+                {
+                    "role": "user",
+                    "content": content,
+                }
+            ]
             json.dump(raw_request, f)
             f.write("\n")
 

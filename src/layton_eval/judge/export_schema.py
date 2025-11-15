@@ -13,6 +13,7 @@ class JustificationJudgement(BaseModel):
 
 if __name__ == "__main__":
     schema = JustificationJudgement.model_json_schema()
+    schema["additionalProperties"] = False
     full_schema = {
         "type": "json_schema",
         "json_schema": {

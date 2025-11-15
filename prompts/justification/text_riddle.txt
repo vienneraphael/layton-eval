@@ -5,5 +5,7 @@ You are given:
 - a riddle solution: contains the full answer, including possible justification.
 
 Knowing all of this, your task is to extract, or generate the right justification explaining why the riddle answer is this one and not anything else.
+Part of the justification might be already present in the riddle hints or solution, so feel free to use them to assess whether the generated justification is correct.
+If it's not present in hints or solution, just judge the justification quality.
 
 Here is the relevant data:
