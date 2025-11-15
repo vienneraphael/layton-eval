@@ -8,5 +8,7 @@ You are given:
 - a generated justification: it's a justification for the riddle, which was extracted.
 
 Knowing all of this, your task is to judge whether or not the generated justification is correct or not, by outputting True or False.
+Part of the justification might be already present in the riddle hints or solution, so feel free to use them to assess whether the generated justification is correct.
+If it's not present in hints or solution, just judge the justification quality.
 
 Here is the relevant data:
