@@ -1,0 +1,80 @@
+import argparse
+import json
+import typing as t
+
+import polars as pl
+
+from layton_eval.settings import settings
+from layton_eval.utils import load_txt
+
+
+def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, hints: int = 0):
+    df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl")
+    image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "visual_riddle.txt")
+    text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "text_riddle.txt")
+    file_path = settings.root_dir / "raw_files" / f"benchmark_{split}"
+    if max_tokens:
+        file_path = file_path.with_suffix("_max_tokens.jsonl")
+    else:
+        file_path = file_path.with_suffix(".jsonl")
+
+    with open(file_path, "w") as f:
+        for row in df.iter_rows(named=True):
+            raw_request = {
+                "system_prompt": "",
+                "messages": [],
+            }
+            if max_tokens:
+                raw_request["max_tokens"] = 2000
+            content = [
+                {"type": "text", "text": f"Riddle question: {row.get('description')}"},
+            ]
+            if row.get("split") == "vlm":
+                content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{row.get('img')}"},
+                    },
+                )
+            if hints >= 1 and row.get("first_hint"):
+                content.append(
+                    {"type": "text", "text": f"First hint: {row.get('first_hint')}"},
+                )
+            if hints >= 2 and row.get("second_hint"):
+                content.append(
+                    {"type": "text", "text": f"Second hint: {row.get('second_hint')}"},
+                )
+            if hints >= 3 and row.get("third_hint"):
+                content.append(
+                    {"type": "text", "text": f"Third hint: {row.get('third_hint')}"},
+                )
+            if hints >= 4 and row.get("special_hint"):
+                content.append(
+                    {"type": "text", "text": f"Special hint: {row.get('special_hint')}"},
+                )
+            content.extend(
+                [
+                    {"type": "text", "text": f"Riddle answer: {row.get('answer')}"},
+                    {"type": "text", "text": f"Riddle solution: {row.get('solution')}"},
+                ]
+            )
+            raw_request["system_prompt"] = (
+                image_prompt if row.get("split") == "vlm" else text_prompt
+            )
+            raw_request["messages"] = [
+                {
+                    "role": "user",
+                    "content": content,
+                }
+            ]
+            json.dump(raw_request, f)
+            f.write("\n")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--max-tokens", action="store_true")
+    parser.add_argument("--split", type=t.Literal["vlm", "llm"], required=True)
+    parser.add_argument("--hints", type=int, default=0)
+    args = parser.parse_args()
+    generate_raw_file(split=args.split, max_tokens=args.max_tokens, hints=args.hints)
