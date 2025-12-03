@@ -12,11 +12,11 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
     df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl")
     image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "visual_riddle.txt")
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "text_riddle.txt")
-    file_path = settings.root_dir / "raw_files" / f"benchmark_{split}"
+    file_name = f"benchmark_{split}_hints_{hints}"
     if max_tokens:
-        file_path = file_path.with_suffix("_max_tokens.jsonl")
-    else:
-        file_path = file_path.with_suffix(".jsonl")
+        file_name += "_max_tokens"
+    file_name += ".jsonl"
+    file_path = settings.root_dir / "raw_files" / file_name
 
     with open(file_path, "w") as f:
         for row in df.iter_rows(named=True):
@@ -74,7 +74,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-tokens", action="store_true")
-    parser.add_argument("--split", type=t.Literal["vlm", "llm"], required=True)
+    parser.add_argument("--split", type=str, required=True)
     parser.add_argument("--hints", type=int, default=0)
     args = parser.parse_args()
     generate_raw_file(split=args.split, max_tokens=args.max_tokens, hints=args.hints)
