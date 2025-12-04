@@ -9,7 +9,9 @@ from layton_eval.utils import load_txt
 
 
 def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, hints: int = 0):
-    df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl")
+    df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl").filter(
+        pl.col("split") == split
+    )
     image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "visual_riddle.txt")
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "text_riddle.txt")
     file_name = f"benchmark_{split}_hints_{hints}"
