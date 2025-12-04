@@ -31,7 +31,7 @@ for split in "vlm" "llm"; do
             processed_file_path="./processed_files/benchmark_${split}_hints_${hints}_${provider}_${model_sanitized}.jsonl"
             results_file_path="./results/benchmark_${split}_hints_${hints}_${provider}_${model_sanitized}.jsonl"
             echo "Creating batch: $batch_name"
-            batchling create --start \
+            batchling create \
                 --name "$batch_name" \
                 --model "$model" \
                 --title "Benchmark evaluation - ${split} split, ${hints} hints" \
