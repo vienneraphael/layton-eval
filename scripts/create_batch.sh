@@ -34,16 +34,17 @@ split="$3"
 hints="$4"
 
 model_sanitized=$(echo "$model" | sed 's/[^a-zA-Z0-9-]/-/g')
-batch_name="benchmark-${split}-hints-${hints}-${provider}-${model_sanitized}"
+batch_name="benchmark-${provider}-${model_sanitized}-${split}-hints-${hints}"
 if [ "$provider" = "anthropic" ]; then
     raw_file_path="./raw_files/benchmark_${split}_hints_${hints}_max_tokens.jsonl"
 else
     raw_file_path="./raw_files/benchmark_${split}_hints_${hints}.jsonl"
 fi
-processed_file_path="./processed_files/benchmark_${split}_hints_${hints}_${provider}_${model_sanitized}.jsonl"
-results_file_path="./results/benchmark_${split}_hints_${hints}_${provider}_${model_sanitized}.jsonl"
-echo "Creating batch: $batch_name"
+processed_file_path="./processed_files/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}.jsonl"
+results_file_path="./results/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}.jsonl"
+echo "Creating batch: $batch_name"clea
 batchling create \
+    --start \
     --name "$batch_name" \
     --model "$model" \
     --title "Benchmark evaluation - ${split} split, ${hints} hints" \

@@ -27,7 +27,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
                 "messages": [],
             }
             if max_tokens:
-                raw_request["max_tokens"] = 2000
+                raw_request["max_tokens"] = 64000
             content = [
                 {"type": "text", "text": f"Riddle question: {row.get('description')}"},
             ]
@@ -54,12 +54,6 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
                 content.append(
                     {"type": "text", "text": f"Special hint: {row.get('special_hint')}"},
                 )
-            content.extend(
-                [
-                    {"type": "text", "text": f"Riddle answer: {row.get('answer')}"},
-                    {"type": "text", "text": f"Riddle solution: {row.get('solution')}"},
-                ]
-            )
             raw_request["system_prompt"] = (
                 image_prompt if row.get("split") == "vlm" else text_prompt
             )
