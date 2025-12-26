@@ -91,7 +91,6 @@ fi
 
 # Build batchling command with optional thinking parameters
 batchling_cmd="batchling create \
-    --start \
     --name \"$batch_name\" \
     --model \"$model\" \
     --title \"Benchmark evaluation - ${split} split, ${hints} hints\" \
