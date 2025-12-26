@@ -67,7 +67,7 @@ if [ -z "$hints" ]; then
 fi
 
 model_sanitized=$(echo "$model" | sed 's/[^a-zA-Z0-9-]/-/g')
-batch_name="benchmark-${provider}-${model_sanitized}-${split}-hints-${hints}"
+batch_name="benchmark_${model_sanitized}_${split}_hints_${hints}"
 if [ "$provider" = "anthropic" ]; then
     raw_file_path="./raw_files/benchmark_${split}_hints_${hints}_max_tokens.jsonl"
 else
