@@ -19,6 +19,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
         file_name += "_max_tokens"
     file_name += ".jsonl"
     file_path = settings.root_dir / "raw_files" / file_name
+    total_chars = 0
 
     with open(file_path, "w") as f:
         for row in df.iter_rows(named=True):
@@ -29,6 +30,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
             }
             if max_tokens:
                 raw_request["max_tokens"] = 64000
+            total_chars += len(row.get("description"))
             content = [
                 {"type": "text", "text": f"Riddle question: {row.get('description')}"},
             ]
@@ -43,18 +45,22 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
                 content.append(
                     {"type": "text", "text": f"First hint: {row.get('first_hint')}"},
                 )
+                total_chars += len(row.get("first_hint"))
             if hints >= 2 and row.get("second_hint"):
                 content.append(
                     {"type": "text", "text": f"Second hint: {row.get('second_hint')}"},
                 )
+                total_chars += len(row.get("second_hint"))
             if hints >= 3 and row.get("third_hint"):
                 content.append(
                     {"type": "text", "text": f"Third hint: {row.get('third_hint')}"},
                 )
+                total_chars += len(row.get("third_hint"))
             if hints >= 4 and row.get("special_hint"):
                 content.append(
                     {"type": "text", "text": f"Special hint: {row.get('special_hint')}"},
                 )
+                total_chars += len(row.get("special_hint"))
             raw_request["system_prompt"] = (
                 image_prompt if row.get("split") == "vlm" else text_prompt
             )
@@ -66,6 +72,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
             ]
             json.dump(raw_request, f)
             f.write("\n")
+    print(f"Total characters: {total_chars}")
 
 
 if __name__ == "__main__":
