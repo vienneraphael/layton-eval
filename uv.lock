@@ -70,7 +70,7 @@ wheels = [
 [[package]]
 name = "batchling"
 version = "0.0.14"
-source = { registry = "https://pypi.org/simple" }
+source = { directory = "../batchling" }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
@@ -81,9 +81,29 @@ dependencies = [
     { name = "structlog" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2b/91/f2c11df3f238ba75c0a50dc1eda1bf54d4cb59508e96f0cbdaa9244a5ec3/batchling-0.0.14.tar.gz", hash = "sha256:6bf9f75ab0578fe355e597012d56f809a1305c138e489212493b9505bc367975", size = 19279, upload-time = "2025-12-26T11:14:46.004Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/ed/2dfc40485ca5ebef2f87e525cdb7f0d2d8ff0c54b675b9a81da89558fb10/batchling-0.0.14-py3-none-any.whl", hash = "sha256:2ba1249e9aa53fe15817c04dcb2fb68cdbbee99fa07b7b630aae82dc6ef7015e", size = 32341, upload-time = "2025-12-26T11:14:44.775Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "click", specifier = ">=8.3.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "platformdirs", specifier = ">=4.5.0" },
+    { name = "pydantic", specifier = ">=2.12.3" },
+    { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "sqlalchemy", specifier = ">=2.0.44" },
+    { name = "structlog", specifier = ">=25.5.0" },
+    { name = "typer", specifier = ">=0.20.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.11.0" },
+    { name = "ipykernel", specifier = ">=7.0.1" },
+    { name = "prek", specifier = ">=0.2.10" },
+    { name = "pyinstrument", specifier = ">=5.1.1" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "respx", specifier = ">=0.22.0" },
+    { name = "ruff", specifier = ">=0.14.2" },
 ]
 
 [[package]]
@@ -709,7 +729,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batchling", specifier = ">=0.0.14" },
+    { name = "batchling", directory = "../batchling" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "mapie", specifier = ">=1.1.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },

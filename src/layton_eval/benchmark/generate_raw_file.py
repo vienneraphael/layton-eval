@@ -23,6 +23,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
     with open(file_path, "w") as f:
         for row in df.iter_rows(named=True):
             raw_request = {
+                "id": row.get("id"),
                 "system_prompt": "",
                 "messages": [],
             }
