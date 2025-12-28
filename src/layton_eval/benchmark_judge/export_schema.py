@@ -6,11 +6,10 @@ from layton_eval.settings import settings
 
 
 class BenchmarkJudgement(BaseModel):
+    is_answer_correct: bool = Field(description="Whether the answer is correct or not.")
     is_justification_correct: bool = Field(
         description="Whether the justification is correct or not."
     )
-    is_answer_correct: bool = Field(description="Whether the answer is correct or not.")
-
 
 if __name__ == "__main__":
     schema = BenchmarkJudgement.model_json_schema()
