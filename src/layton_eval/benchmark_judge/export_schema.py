@@ -11,6 +11,7 @@ class BenchmarkJudgement(BaseModel):
         description="Whether the justification is correct or not."
     )
 
+
 if __name__ == "__main__":
     schema = BenchmarkJudgement.model_json_schema()
     schema["additionalProperties"] = False
