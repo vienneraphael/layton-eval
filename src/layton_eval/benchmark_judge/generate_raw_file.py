@@ -86,7 +86,7 @@ def generate_raw_file(
             content.append(
                 {
                     "type": "text",
-                    "text": f"Generated justification: {row.get('justification')}",
+                    "text": f"Suggested justification: {row.get('justification')}",
                 }
             )
             total_chars += len(row.get("justification"))

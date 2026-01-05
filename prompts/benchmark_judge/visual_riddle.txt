@@ -5,14 +5,14 @@ You are given:
 - ground truth riddle answer: contains the ground truth answer in its simplest form, usually no explanation.
 - ground truth riddle solution: contains the full ground truth answer, including possible justification.
 - several riddle hints: contain hints about the expected answer and justification
-- riddle justification: a candidate approach to solving the riddle, might not be the only way to proceed.
+- suggested riddle justification: a candidate approach to solving the riddle, might not be the only way to proceed.
 - predicted riddle answer: a riddle answer given by a participant
 - predicted riddle justification: the participant justification corresponding to its answer
 
 Knowing all of this, your task is to judge whether or not the participant answer and justification are correct.
 You will output True or False to each of them, meaning you output two booleans.
 
-If a justification does not correspond to the ground truth justification but you can validate the reasoning is correct, set its flag to true.
+If a suggested justification does not correspond to the ground truth justification but you can validate the reasoning is correct, set its flag to true.
 On the contrary, answers must match the ground truth answer to be considered correct.
 
 Here is the relevant data:
