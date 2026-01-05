@@ -21,7 +21,7 @@ def generate_raw_file(
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark_judge" / "text_riddle.txt")
     file_name = f"judge_{model_tag}"
     if max_tokens:
-        file_name.replace(".jsonl", "")
+        file_name = file_name.replace(".jsonl", "")
         file_name += "_max_tokens"
         file_name += ".jsonl"
     file_path = settings.root_dir / "raw_files" / file_name
