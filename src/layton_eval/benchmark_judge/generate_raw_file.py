@@ -28,8 +28,6 @@ def generate_raw_file(
     total_chars = 0
     df_results = pl.read_ndjson(results_file_path).select("custom_id", "answer")
     joined_df = df.join(df_results, left_on="id", right_on="custom_id", suffix="_results")
-    print(joined_df.columns)
-    print(joined_df.head())
     with open(file_path, "w") as f:
         for row in joined_df.iter_rows(named=True):
             raw_request = {
