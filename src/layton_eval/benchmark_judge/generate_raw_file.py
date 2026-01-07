@@ -1,6 +1,5 @@
 import argparse
 import json
-import re
 import typing as t
 
 import polars as pl
@@ -15,11 +14,9 @@ def generate_raw_file(
     df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl").filter(
         pl.col("split") == split
     )
-    model_tag = results_file_path.split("/")[-1].replace("benchmark_", "")
-    model_tag = re.sub(r"_hints_\d+", "", model_tag)
+    file_name = results_file_path.split("/")[-1].replace("benchmark_", "judge_")
     image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark_judge" / "visual_riddle.txt")
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark_judge" / "text_riddle.txt")
-    file_name = f"judge_{model_tag}"
     if max_tokens:
         file_name = file_name.replace(".jsonl", "")
         file_name += "_max_tokens"
