@@ -8,7 +8,6 @@ Usage: uv run streamlit run src/layton_eval/human_judge.py -- --pattern "benchma
 import argparse
 import json
 import random
-import re
 from collections import Counter
 from pathlib import Path
 
@@ -46,7 +45,7 @@ def load_riddle_data() -> dict[str, dict]:
 def load_predictions(pattern: str) -> list[dict]:
     """Load all predictions matching the pattern from results folder."""
     predictions = []
-    
+
     for file_path in RESULTS_DIR.glob(pattern):
         with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
@@ -59,17 +58,17 @@ def load_predictions(pattern: str) -> list[dict]:
                 except (json.JSONDecodeError, KeyError):
                     pred["parsed_answer"] = pred.get("answer", "")
                     pred["parsed_justification"] = ""
-                
+
                 # Extract provider from file name (e.g., benchmark_anthropic_... -> anthropic)
                 parts = file_path.stem.split("_")
                 if len(parts) >= 2:
                     pred["provider"] = parts[1]
                 else:
                     pred["provider"] = "unknown"
-                
+
                 pred["source_file"] = file_path.name
                 predictions.append(pred)
-    
+
     return predictions
 
 
@@ -86,6 +85,53 @@ def load_annotations() -> dict[str, dict]:
     return annotations
 
 
+def load_jury_scores() -> dict[tuple[str, str], dict]:
+    """
+    Load jury scores from all jury_*.jsonl files.
+
+    Returns:
+        A dict mapping (jury_file, custom_id) -> jury score dict
+        Each jury score dict contains: answer_correctness, justification_correctness, both_correctness
+    """
+    jury_scores: dict[tuple[str, str], dict] = {}
+
+    for file_path in RESULTS_DIR.glob("jury_*.jsonl"):
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    data = json.loads(line.strip())
+                    custom_id = data.get("custom_id", "")
+                    if custom_id:
+                        key = (file_path.name, custom_id)
+                        jury_scores[key] = {
+                            "answer_correctness": data.get("answer_correctness", 1.0),
+                            "justification_correctness": data.get("justification_correctness", 1.0),
+                            "both_correctness": data.get("both_correctness", 1.0),
+                        }
+
+    return jury_scores
+
+
+def get_jury_score_for_prediction(
+    jury_scores: dict[tuple[str, str], dict],
+    riddle_id: str,
+    source_file: str,
+) -> dict | None:
+    """
+    Get the jury score for a specific prediction.
+
+    Maps the prediction source file (benchmark_*) to the corresponding jury file (jury_*).
+
+    Returns:
+        The jury score dict if found, None otherwise.
+    """
+    # Convert benchmark file name to jury file name
+    # e.g., benchmark_openai_gpt-5-1_llm_hints_0.jsonl -> jury_openai_gpt-5-1_llm_hints_0.jsonl
+    jury_file = source_file.replace("benchmark_", "jury_")
+
+    return jury_scores.get((jury_file, riddle_id))
+
+
 def save_annotation(annotation: dict) -> None:
     """Append a new annotation to the annotations file."""
     with open(ANNOTATIONS_PATH, "a", encoding="utf-8") as f:
@@ -97,11 +143,11 @@ def get_annotation_stats(annotations: dict, predictions: list) -> dict:
     # Count annotations per riddle
     riddle_counts: Counter = Counter()
     provider_counts: Counter = Counter()
-    
+
     for (riddle_id, _source_file), ann in annotations.items():
         riddle_counts[riddle_id] += 1
         provider_counts[ann.get("provider", "unknown")] += 1
-    
+
     # Count total predictions per riddle and provider
     all_riddles: set = set()
     all_providers: set = set()
@@ -110,7 +156,7 @@ def get_annotation_stats(annotations: dict, predictions: list) -> dict:
         if riddle_id:
             all_riddles.add(riddle_id)
         all_providers.add(pred["provider"])
-    
+
     return {
         "riddle_counts": riddle_counts,
         "provider_counts": provider_counts,
@@ -125,27 +171,26 @@ def select_next_prediction(
 ) -> dict | None:
     """
     Select the next prediction to annotate.
-    
+
     Strategy (two-step selection for balanced coverage):
     1. Choose a riddle randomly among those with lowest annotation count
     2. For that riddle, choose a provider randomly among those with lowest annotation count
-    
+
     This works because every provider has predictions on every riddle.
     """
     # Filter out already annotated
     unannotated = [
-        p for p in predictions
-        if (p.get("custom_id", ""), p["source_file"]) not in annotations
+        p for p in predictions if (p.get("custom_id", ""), p["source_file"]) not in annotations
     ]
-    
+
     if not unannotated:
         return None
-    
+
     # Get stats
     stats = get_annotation_stats(annotations, predictions)
     riddle_counts = stats["riddle_counts"]
     provider_counts = stats["provider_counts"]
-    
+
     # Group unannotated predictions by riddle
     by_riddle: dict[str, list[dict]] = {}
     for pred in unannotated:
@@ -153,24 +198,23 @@ def select_next_prediction(
         if riddle_id not in by_riddle:
             by_riddle[riddle_id] = []
         by_riddle[riddle_id].append(pred)
-    
+
     # Step 1: Find riddles with lowest annotation count
     riddle_scores = [(riddle_counts.get(rid, 0), rid) for rid in by_riddle.keys()]
     min_riddle_count = min(score for score, _ in riddle_scores)
     candidate_riddles = [rid for score, rid in riddle_scores if score == min_riddle_count]
-    
+
     # Randomly select one riddle
     selected_riddle = random.choice(candidate_riddles)
-    
+
     # Step 2: Among predictions for that riddle, find providers with lowest annotation count
     riddle_predictions = by_riddle[selected_riddle]
     provider_scores = [
-        (provider_counts.get(pred["provider"], 0), pred)
-        for pred in riddle_predictions
+        (provider_counts.get(pred["provider"], 0), pred) for pred in riddle_predictions
     ]
     min_provider_count = min(score for score, _ in provider_scores)
     candidate_predictions = [pred for score, pred in provider_scores if score == min_provider_count]
-    
+
     # Randomly select one prediction
     return random.choice(candidate_predictions)
 
@@ -178,30 +222,29 @@ def select_next_prediction(
 def display_riddle_info(riddle: dict) -> None:
     """Display riddle information in the UI."""
     st.markdown("### 📚 Riddle Information")
-    
+
     col1, col2 = st.columns([2, 1])
-    
+
     with col1:
         st.markdown(f"**ID:** `{riddle.get('id', 'N/A')}`")
         st.markdown(f"**Category:** {riddle.get('category', 'N/A')}")
         st.markdown(f"**Picarats:** {riddle.get('picarats', 'N/A')}")
-        
+
         url = riddle.get("url", "")
         if url:
             st.markdown(f"**URL:** [{url}]({url})")
-    
+
     with col2:
         # Display image if available
         img_data = riddle.get("img")
         if img_data:
-            import base64
             try:
                 st.image(f"data:image/jpeg;base64,{img_data}", caption="Riddle Image", width=200)
             except Exception:
                 st.warning("Could not display image")
-    
+
     st.markdown("---")
-    
+
     # Question
     st.markdown("#### ❓ Question")
     st.markdown(riddle.get("description", "N/A"))
@@ -224,12 +267,12 @@ def display_hints(riddle: dict) -> None:
 def display_solution(riddle: dict) -> None:
     """Display riddle solution and answer."""
     st.markdown("#### ✅ Ground Truth")
-    
+
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Answer:**")
         st.info(riddle.get("answer", "N/A"))
-    
+
     with col2:
         st.markdown("**Solution:**")
         st.success(riddle.get("solution", "N/A"))
@@ -243,32 +286,46 @@ def display_prediction(prediction: dict) -> None:
     st.markdown(f"**Provider:** `{prediction.get('provider', 'N/A')}`")
 
 
+def display_jury_warning(
+    jury_scores: dict[tuple[str, str], dict],
+    riddle_id: str,
+    source_file: str,
+) -> None:
+    """Display a warning if the jury for this prediction's model has justification_correctness < 1.0."""
+    score = get_jury_score_for_prediction(jury_scores, riddle_id, source_file)
+
+    if score is not None:
+        just_corr = score.get("justification_correctness", 1.0)
+        if just_corr < 1.0:
+            st.warning(f"⚠️ **Jury Disagreement on Justification!** Score: **{just_corr:.0%}**")
+
+
 def display_comparison(riddle: dict, prediction: dict) -> None:
     """Display side-by-side comparison for efficient annotation."""
     st.markdown("---")
     st.markdown("## 📋 Comparison View")
-    
+
     # Answer comparison
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("#### 🎯 Ground Truth Answer")
         st.info(riddle.get("answer", "N/A"))
-    
+
     with col2:
         st.markdown("#### 🤖 Predicted Answer")
         st.warning(prediction.get("parsed_answer", "N/A"))
-    
+
     st.markdown("---")
-    
+
     # Justification comparison with hints
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("#### 📖 Solution & Hints")
         st.markdown(f"**Solution:** {riddle.get('solution', 'N/A')}")
         display_hints(riddle)
-    
+
     with col2:
         st.markdown("#### 💭 Model Justification")
         justification = prediction.get("parsed_justification", "N/A")
@@ -281,77 +338,82 @@ def main():
         page_icon="🔍",
         layout="wide",
     )
-    
+
     # Parse args (handle Streamlit's argument passing)
     import sys
+
     # Find -- in argv and get args after it
     try:
         sep_idx = sys.argv.index("--")
-        args_to_parse = sys.argv[sep_idx + 1:]
+        args_to_parse = sys.argv[sep_idx + 1 :]
     except ValueError:
         args_to_parse = []
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--pattern", type=str, default=r"benchmark_*.jsonl")
     args = parser.parse_args(args_to_parse)
-    
+
     st.title("🔍 Layton Eval - Human Annotation Interface")
-    
+
     # Sidebar for stats and controls
     with st.sidebar:
         st.header("📊 Statistics")
-        
+
         # Load data
         with st.spinner("Loading data..."):
             riddles = load_riddle_data()
             predictions = load_predictions(args.pattern)
             annotations = load_annotations()
-        
+            jury_scores = load_jury_scores()
+
         st.metric("Total Riddles", len(riddles))
         st.metric("Total Predictions", len(predictions))
         st.metric("Annotations Done", len(annotations))
-        
+
+        # Store jury_scores in session state for use in main content
+        st.session_state["jury_scores"] = jury_scores
+
         # Progress
         if predictions:
             progress = len(annotations) / len(predictions)
             st.progress(progress)
             st.caption(f"Progress: {progress:.1%}")
-        
+
         st.markdown("---")
-        
+
         # Stats breakdown
         stats = get_annotation_stats(annotations, predictions)
-        
+
         with st.expander("Riddle Coverage"):
             for riddle_id, count in sorted(stats["riddle_counts"].items())[:10]:
                 st.text(f"{riddle_id}: {count}")
             if len(stats["riddle_counts"]) > 10:
                 st.text("...")
-        
+
         with st.expander("Provider Coverage"):
             for provider, count in stats["provider_counts"].items():
                 st.text(f"{provider}: {count}")
-        
+
         st.markdown("---")
-        
+
         # Manual navigation
         st.header("🔧 Controls")
         if st.button("🔄 Get Next Sample"):
             if "current_prediction" in st.session_state:
                 del st.session_state["current_prediction"]
             st.rerun()
-        
+
         if st.button("🗑️ Skip Current"):
             if "current_prediction" in st.session_state:
                 del st.session_state["current_prediction"]
             st.rerun()
-    
+
     # Main content
     if not predictions:
         st.error(f"No predictions found matching pattern: `{args.pattern}`")
         st.info(f"Looking in: {RESULTS_DIR}")
         return
-    
+
     # Select or get current prediction
     if "current_prediction" not in st.session_state:
         selected = select_next_prediction(predictions, annotations)
@@ -359,33 +421,37 @@ def main():
             st.success("🎉 All predictions have been annotated!")
             return
         st.session_state["current_prediction"] = selected
-    
+
     prediction = st.session_state["current_prediction"]
-    
+
     # Get corresponding riddle
     riddle_id = prediction.get("custom_id", "")
     riddle = riddles.get(riddle_id)
-    
+
     if not riddle:
         st.error(f"Riddle not found: {riddle_id}")
         if st.button("Skip and get next"):
             del st.session_state["current_prediction"]
             st.rerun()
         return
-    
+
     # Display riddle info
     display_riddle_info(riddle)
-    
+
+    # Display jury disagreement warning if applicable
+    jury_scores = st.session_state.get("jury_scores", {})
+    display_jury_warning(jury_scores, riddle_id, prediction["source_file"])
+
     # Display comparison view for efficient annotation
     display_comparison(riddle, prediction)
-    
+
     st.markdown("---")
-    
+
     # Annotation interface
     st.markdown("## ✍️ Annotation")
-    
+
     col1, col2, col3 = st.columns([1, 1, 2])
-    
+
     with col1:
         st.markdown("### Answer Correct?")
         answer_correct = st.radio(
@@ -395,7 +461,7 @@ def main():
             horizontal=True,
             label_visibility="collapsed",
         )
-    
+
     with col2:
         st.markdown("### Justification Correct?")
         justification_correct = st.radio(
@@ -405,7 +471,7 @@ def main():
             horizontal=True,
             label_visibility="collapsed",
         )
-    
+
     with col3:
         st.markdown("### Notes (optional)")
         notes = st.text_area(
@@ -414,14 +480,14 @@ def main():
             height=68,
             label_visibility="collapsed",
         )
-    
+
     st.markdown("---")
-    
+
     # Quick annotation buttons with keyboard shortcuts
     st.markdown("### ⚡ Quick Annotation (use keyboard shortcuts)")
-    
+
     col1, col2, col3, col4 = st.columns(4)
-    
+
     def submit_annotation(ans_correct: bool, just_correct: bool) -> None:
         """Save annotation and move to next."""
         annotation = {
@@ -430,16 +496,15 @@ def main():
             "model": prediction.get("model", ""),
             "provider": prediction.get("provider", ""),
             "custom_id": prediction.get("custom_id", ""),
-            "answer_correct": ans_correct,
-            "justification_correct": just_correct,
-            "overall_correct": ans_correct and just_correct,
+            "is_answer_correct": ans_correct,
+            "is_justification_correct": just_correct,
             "notes": notes,
         }
         save_annotation(annotation)
         st.success("Annotation saved!")
         del st.session_state["current_prediction"]
         st.rerun()
-    
+
     with col1:
         if st.button(
             "✅ Both Correct (y)",
@@ -448,7 +513,7 @@ def main():
             use_container_width=True,
         ):
             submit_annotation(True, True)
-    
+
     with col2:
         if st.button(
             "❌ Both Wrong (n)",
@@ -456,7 +521,7 @@ def main():
             use_container_width=True,
         ):
             submit_annotation(False, False)
-    
+
     with col3:
         if st.button(
             "⚠️ Answer Only (a)",
@@ -464,7 +529,7 @@ def main():
             use_container_width=True,
         ):
             submit_annotation(True, False)
-    
+
     with col4:
         if st.button(
             "⏭️ Skip (s)",
@@ -473,14 +538,14 @@ def main():
         ):
             del st.session_state["current_prediction"]
             st.rerun()
-    
+
     st.markdown("---")
-    
+
     # Manual submit with custom selection
     st.markdown("### 📝 Manual Annotation")
     if st.button("✅ Submit Annotation", type="primary"):
         submit_annotation(answer_correct == "Yes", justification_correct == "Yes")
-    
+
     # Keyboard shortcuts hint
     st.markdown("---")
     st.caption("💡 **Keyboard Shortcuts:**")
