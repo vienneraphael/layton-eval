@@ -1,7 +1,6 @@
 raw_files/*
 processed_files/*
 results/*
-annotations/*
 json_schemas/*
 .env
 .venv/
