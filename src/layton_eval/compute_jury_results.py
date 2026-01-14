@@ -23,9 +23,9 @@ def main(glob_prefix: str):
         )
     )
     df = df.group_by("custom_id").agg(
-        pl.col("is_answer_correct").mean().alias("answer_correctness"),
-        pl.col("is_justification_correct").mean().alias("justification_correctness"),
-        pl.col("both_correct").mean().alias("both_correctness"),
+        pl.col("is_answer_correct").mean().round(2).alias("answer_correctness"),
+        pl.col("is_justification_correct").mean().round(2).alias("justification_correctness"),
+        pl.col("both_correct").mean().round(2).alias("both_correctness"),
     )
     output_file_path = f"{glob_prefix.replace('judge_', 'jury_')}.jsonl"
     df.write_ndjson(output_file_path)
