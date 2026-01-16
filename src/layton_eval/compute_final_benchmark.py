@@ -98,7 +98,15 @@ def main(field_name: str):
         "hf://datasets/rvienne/layton-eval-ppi/ppi_llm.jsonl", infer_schema_length=100000
     )
     results_df = get_benchmark_results(df_ppi, field_name=field_name)
-    df_final = compute_final_ranks(results_df)
+    df_final = compute_final_ranks(results_df).select(
+        "rank",
+        "best_possible_rank",
+        "worst_possible_rank",
+        "model",
+        "score",
+        "95% CI (±)",
+        "provider",
+    )
     df_final.write_ndjson("results_llm.jsonl")
 
 
