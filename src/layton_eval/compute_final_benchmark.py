@@ -8,7 +8,7 @@ from ppi_py import ppi_mean_pointestimate
 def get_ppi_inputs(df_ppi: pl.DataFrame, provider: str, model: str, field_name="both_correct"):
     judge_field_name = field_name.replace("is_", "") + "ness"
     df_ppi = df_ppi.with_columns(
-        pl.mean_horizontal(pl.selectors.starts_with(field_name)).round(2).alias(judge_field_name)
+        pl.mean_horizontal(pl.selectors.starts_with(field_name)).alias(judge_field_name)
     )
     df_labelled_unsampled = df_ppi.filter(
         (pl.col("provider") != provider) & (pl.col("human_answer_correct").is_not_null())
@@ -58,9 +58,9 @@ def get_benchmark_results(df_ppi: pl.DataFrame, field_name="both_correct") -> pl
         results["provider"].append(provider)
         results["model"].append(model)
         score = (ppi_ci_upper + ppi_ci_lower) / 2
-        results["score"].append((score * 100).round(2))
+        results["score"].append((score * 100).round(1))
         spread = (ppi_ci_upper - ppi_ci_lower) / 2
-        results["95% CI (±)"].append((spread * 100).round(2))
+        results["95% CI (±)"].append((np.floor(spread * 100 * 10) + 1) / 10)
     results = pl.DataFrame(results)
     return results
 

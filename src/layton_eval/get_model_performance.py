@@ -24,9 +24,9 @@ def get_jury_df(judge_files: list[str]):
         )
         .group_by("custom_id")
         .agg(
-            pl.col("is_answer_correct").mean().round(2).alias("answer_correctness"),
-            pl.col("is_justification_correct").mean().round(2).alias("justification_correctness"),
-            pl.col("both_correct").mean().round(2).alias("both_correctness"),
+            pl.col("is_answer_correct").mean().alias("answer_correctness"),
+            pl.col("is_justification_correct").mean().alias("justification_correctness"),
+            pl.col("both_correct").mean().alias("both_correctness"),
         )
     )
 
@@ -36,7 +36,7 @@ def get_ppi_inputs(
 ):
     judge_field_name = field_name.replace("is_", "") + "ness"
     df_labelled_unsampled = df_human.with_columns(
-        pl.mean_horizontal(pl.selectors.starts_with(field_name)).round(2).alias(judge_field_name)
+        pl.mean_horizontal(pl.selectors.starts_with(field_name)).alias(judge_field_name)
     )
     distribution = df_judge.get_column(judge_field_name).value_counts()
     n_samples = (
@@ -80,8 +80,8 @@ def get_model_performance(
     spread = (ppi_ci_upper - ppi_ci_lower) / 2
     score = (ppi_ci_upper + ppi_ci_lower) / 2
     return {
-        "score": (score * 100).round(2).item(),
-        "95% CI (±)": (spread * 100).round(2).item(),
+        "score": (score * 100).round(1).item(),
+        "95% CI (±)": (np.floor(spread * 100 * 10) + 1) / 10,
     }
 
 
