@@ -85,11 +85,17 @@ def compute_final_ranks(results_df: pl.DataFrame) -> pl.DataFrame:
             .sum()
             .alias("worst_possible_rank"),
         )
+    ).with_columns(
+        (
+            pl.col("best_possible_rank").cast(pl.String)
+            + pl.lit(" <--> ")
+            + pl.col("worst_possible_rank").cast(pl.String)
+        ).alias("rank_spread")
     )
     return (
         results_df.join(rank_spread, on="model", how="left")
         .sort(by="rank")
-        .drop("ppi_ci_lower", "ppi_ci_upper")
+        .drop("ppi_ci_lower", "ppi_ci_upper", "best_possible_rank", "worst_possible_rank")
     )
 
 
@@ -100,8 +106,7 @@ def main(field_name: str):
     results_df = get_benchmark_results(df_ppi, field_name=field_name)
     df_final = compute_final_ranks(results_df).select(
         "rank",
-        "best_possible_rank",
-        "worst_possible_rank",
+        "rank_spread",
         "model",
         "score",
         "95% CI (±)",
