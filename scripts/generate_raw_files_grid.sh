@@ -11,12 +11,12 @@ for split in "vlm" "llm"; do
             echo "Running: split=$split, max_tokens=$max_tokens, hints=$hints"
 
             if [ "$max_tokens" = "true" ]; then
-                uv run python src/layton_eval/benchmark/generate_raw_file.py \
+                python src/layton_eval/benchmark/generate_raw_file.py \
                     --split "$split" \
                     --max-tokens \
                     --hints "$hints"
             else
-                uv run python src/layton_eval/benchmark/generate_raw_file.py \
+                python src/layton_eval/benchmark/generate_raw_file.py \
                     --split "$split" \
                     --hints "$hints"
             fi

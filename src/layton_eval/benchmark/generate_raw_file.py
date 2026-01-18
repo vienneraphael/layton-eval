@@ -8,8 +8,10 @@ from layton_eval.settings import settings
 from layton_eval.utils import load_txt
 
 
-def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, hints: int = 0):
-    df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl").filter(
+def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: int | None = None, hints: int = 0):
+    df = pl.read_ndjson(
+        "hf://datasets/rvienne/layton-eval/layton_eval_llm.jsonl", infer_schema_length=100000
+    ).filter(
         pl.col("split") == split
     )
     image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "visual_riddle.txt")
@@ -29,7 +31,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: bool = False, 
                 "messages": [],
             }
             if max_tokens:
-                raw_request["max_tokens"] = 64000
+                raw_request["max_tokens"] = max_tokens
             total_chars += len(row.get("description"))
             content = [
                 {"type": "text", "text": f"Riddle question: {row.get('description')}"},

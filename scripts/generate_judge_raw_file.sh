@@ -40,9 +40,9 @@ fi
 
 # Run without --max-tokens
 echo "Running without --max-tokens..."
-uv run python src/layton_eval/benchmark_judge/generate_raw_file.py --split "$split" --results-file-path "$results_file_path"
+python src/layton_eval/benchmark_judge/generate_raw_file.py --split "$split" --results-file-path "$results_file_path"
 
 # Run with --max-tokens
 echo ""
 echo "Running with --max-tokens..."
-uv run python src/layton_eval/benchmark_judge/generate_raw_file.py --split "$split" --results-file-path "$results_file_path" --max-tokens
+python src/layton_eval/benchmark_judge/generate_raw_file.py --split "$split" --results-file-path "$results_file_path" --max-tokens
