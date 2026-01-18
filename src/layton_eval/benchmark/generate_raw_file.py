@@ -8,12 +8,12 @@ from layton_eval.settings import settings
 from layton_eval.utils import load_txt
 
 
-def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: int | None = None, hints: int = 0):
+def generate_raw_file(
+    split: t.Literal["vlm", "llm"], max_tokens: int | None = None, hints: int = 0
+):
     df = pl.read_ndjson(
         "hf://datasets/rvienne/layton-eval/layton_eval_llm.jsonl", infer_schema_length=100000
-    ).filter(
-        pl.col("split") == split
-    )
+    ).filter(pl.col("split") == split)
     image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "visual_riddle.txt")
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "text_riddle.txt")
     file_name = f"benchmark_{split}_hints_{hints}"
@@ -79,7 +79,7 @@ def generate_raw_file(split: t.Literal["vlm", "llm"], max_tokens: int | None = N
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--max-tokens", action="store_true")
+    parser.add_argument("--max-tokens", type=int, help="Max tokens for the response")
     parser.add_argument("--split", type=str, required=True)
     parser.add_argument("--hints", type=int, default=0)
     args = parser.parse_args()

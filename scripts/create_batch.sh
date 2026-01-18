@@ -27,6 +27,10 @@ while [[ $# -gt 0 ]]; do
             thinking_budget="$2"
             shift 2
             ;;
+        --max-tokens)
+            max_tokens_flag=true
+            shift 2
+            ;;
         *)
             echo "Error: Unknown option $1"
             echo "Usage: $0 --provider <provider> --model <model> --split <split> --hints <hints> [--thinking-level <level>] [--thinking-budget <budget>]"
@@ -68,7 +72,7 @@ fi
 
 model_sanitized=$(echo "$model" | sed 's/[^a-zA-Z0-9-]/-/g')
 batch_name="benchmark_${model_sanitized}_${split}_hints_${hints}"
-if [ "$provider" = "anthropic" ] || [ "$provider" = "together" ]; then
+if [ "$max_tokens_flag" = true ] || [ "$provider" = "anthropic" ] || [ "$provider" = "together" ]; then
     raw_file_path="./raw_files/benchmark_${split}_hints_${hints}_max_tokens.jsonl"
 else
     raw_file_path="./raw_files/benchmark_${split}_hints_${hints}.jsonl"

@@ -5,7 +5,7 @@
 # Parse command line arguments
 split=""
 hints=""
-max_tokens=false
+max_tokens=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -18,12 +18,12 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --max-tokens)
-            max_tokens=true
-            shift 1
+            max_tokens="$2"
+            shift 2
             ;;
         *)
             echo "Error: Unknown option $1"
-            echo "Usage: $0 --split <vlm|llm> --hints <int> [--max-tokens]"
+            echo "Usage: $0 --split <vlm|llm> --hints <int> [--max-tokens <int>]"
             exit 1
             ;;
     esac
@@ -32,23 +32,23 @@ done
 # Validate required parameters
 if [ -z "$split" ]; then
     echo "Error: --split is required"
-    echo "Usage: $0 --split <vlm|llm> --hints <int> [--max-tokens]"
+    echo "Usage: $0 --split <vlm|llm> --hints <int> [--max-tokens <int>]"
     exit 1
 fi
 
 if [ -z "$hints" ]; then
     echo "Error: --hints is required"
-    echo "Usage: $0 --split <vlm|llm> --hints <int> [--max-tokens]"
+    echo "Usage: $0 --split <vlm|llm> --hints <int> [--max-tokens <int>]"
     exit 1
 fi
 
 echo "Running: split=$split, hints=$hints, max_tokens=$max_tokens"
 
-if [ "$max_tokens" = true ]; then
+if [ -n "$max_tokens" ]; then
     python src/layton_eval/benchmark/generate_raw_file.py \
         --split "$split" \
         --hints "$hints" \
-        --max-tokens
+        --max-tokens "$max_tokens"
 else
     python src/layton_eval/benchmark/generate_raw_file.py \
         --split "$split" \
