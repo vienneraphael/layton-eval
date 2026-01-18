@@ -10,6 +10,8 @@ You can find the judge system prompt in `./prompts/benchmark_judge/`.
 
 When running the jury, you should make sure your jury has 3 judges and excludes judges from the provider you chosed to avoid self-preference bias and family bias.
 
+Your files should be named like: "judge_{provider}_{model_name}_{split}_hints_{n_hints}_by_{judge_provider}_{judge_model_name}.jsonl"
+
 The output format should be three different `.jsonl` files with the following structure:
 ```json
 {

@@ -85,7 +85,8 @@ def get_model_performance(
     }
 
 
-def main(provider: str, field_name: str, judge_files: list[str]):
+def main(field_name: str, judge_files: list[str]):
+    provider = judge_files[0].split("_")[1]
     if len(judge_files) != 3:
         raise ValueError("Expected 3 judge files, got {}".format(len(judge_files)))
     df_jury = get_jury_df(judge_files)
@@ -97,9 +98,6 @@ def main(provider: str, field_name: str, judge_files: list[str]):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--provider", type=str, required=True, help="Provider used to make predictions"
-    )
     parser.add_argument("--field-name", type=str, default="both_correct")
     parser.add_argument(
         "--judge-files",
@@ -109,5 +107,5 @@ if __name__ == "__main__":
         help="List of judge result files (supports shell wildcards like results/*.jsonl)",
     )
     args = parser.parse_args()
-    model_performance = main(args.provider, args.field_name, args.judge_files)
+    model_performance = main(args.field_name, args.judge_files)
     print(model_performance)
