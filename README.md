@@ -1,93 +1,158 @@
-# Layton-eval: Asking LLMs and VLMs to solve Professor Layton's puzzles
+# layton-eval: Asking LLMs and VLMs to solve Professor Layton's riddles
 
-Welcome to the repository! Our aim with this project is to create a benchmark which measures LLM/VLM performance on Pr. Layton riddles and having it open-sourced.
+This repo contains all that you need to independently compute the performance metric for any kind of model on the [layton-eval](https://huggingface.co/datasets/rvienne/layton-eval) eval benchmark dataset.
 
-# Riddle types
+## Evaluate a model on the benchmark
 
-This schema explains how we will categorize riddles for the project:
+### Installation
 
-![Project structure](./docs/layton-eval-structure.png)
+You can install the project using any of the following commands.
 
-Here's a textual breakdown:
+Using uv (recommended):
 
-## Game engine
+```bash
+uv sync
+```
 
-We will focus on riddles that **do not** require running the game to verify. That means that we will only consider riddles having a solution that can be represented as text.
+Using pip through `pyproject.toml`
 
-We'll call `output_type` the variable indicating whether a riddle is a textual one or not.
+```bash
+pip install -e .
+```
 
-## Riddle adaptation
+Using pip through `requirements.txt`
 
-Some riddles, if adapted, can have their output represented as text.
+```bash
+pip install -r requirements.txt
+```
 
-The `output_type` variable will have three possible values:
-- `text-ready` if the riddle is usable as-is
-- `text-adaptable` if the riddle is not usable as-is but can be adapted to be textual
-- `action` if the riddle requires running the game to verify.
+### Computing model performance
 
-## Input image
+Predictions can be run in two different ways, depending if you use a Batch API compatible model (using the [`batchling`](https://github.com/vienneraphael/batchling) library I built) from any of those providers:
 
-All riddles come with an input image, but not all image inputs are required or useful to solve the riddle.
+- OpenAI
+- Gemini
+- Anthropic
+- Mistral
+- Together
+- Groq
 
-For this reason, we will differentiate riddles for which the input image is necessary to solve it.
+> [!TIP]
+> Batch APIs are particularly suited for model evaluation and will likely save you **50% off** your inference costs!
 
-All riddles that do not require input image will be classified using the variable `input_type = LLM-solvable`
+To compute model performance on the benchmark, you can choose to either:
 
-## Multimodal riddles
+- [Compute performance using a supported Batch API](./evaluate_batch.md)
+- [Bring your own predictions](./bring_your_own_predictions.md)
 
-The leftover multimodal input riddles will be again classified:
-- if the image input cannot be adapted as text, we will tag them as `input_type = VLM-solvable` only.
-- if the image input can be adapted to textual, we will tag them as `input_type = [VLM-solvable, LLM-solvable]` to account for the fact that we could feed them to both type of models.
+## Evaluation Methodology
 
+In the [`layton-eval`](https://huggingface.co/datasets/rvienne/layton-eval) benchmark, we're evaluating models using a bootstrapped PPI (Prediction-Powered Inference) method.
 
-# Project milestones
+The following details how that works.
 
-The project will be divided into 3 phases:
+### Predictions Schema
 
-## V0
+In [`layton-eval`](https://huggingface.co/datasets/rvienne/layton-eval), models are using structured output generation, e.g. models generating valid typed JSON, to generate the following type of JSON:
 
-### Structured output generation
-use a structured generation pipeline to ask a model about:
-- `output_type`
-- `input_type`
-- `answer` (if applicable)
+```json
+{
+    "answer": str,
+    "justification": str
+}
+```
 
-### Watermarking?
+Having structured outputs generation at the core of the benchmark prediction creates a barrier-to-entry where models failing to generate valid JSON for a given riddle automatically fail said riddle.
 
-### Human verification interface
-verify auto-annotation by hosting a Gradio interface on HF and manually review riddle annotations.
+Since some riddles have a very narrow range of possible answers (like choosing from A, B, C or D), we try to limit false positives of a model having the right answer "by luck" by also asking models to generate a justification for their answer!
 
-### sub-datasets creation
-from the curated gold data, generate two data splits:
-- `VLM-solvable` riddles
-- `LLM-solvable` riddles
+The idea is to estimate a metric representing the percentage of the times a model gives a valid answer, meaning the answer is the right one and the justification backing it up also makes sense.
 
-### Benchmark run
-For the two data splits, run models against those benchmarks with two eval frameworks:
-1. LLM-as-judge
-2. Structured output benchmark
+The next section focuses on how we estimate an answer and justification to be correct given that both are free-text.
 
-### Reporting and communication
-- report results with nice plots
-- communicate on our first results
+### LLM-as-Judge
 
-### Repo cleanup
-- clean the repo and make it reproducible end-to-end
+[`layton-eval`](https://huggingface.co/datasets/rvienne/layton-eval) riddles are free text format. For this reason, it is hard to systematically compare predictions to ground truth using standard operators or metrics.
 
-## V1
+We're relying on the LLM-as-Judge to estimate whether an answer is correct, based on all riddle context:
 
-### Enrich dataset with `text-adapt` riddles
+- description
+- ground truth answer
+- hints..
 
-Include those riddles with a LLM pipeline + human review cycle.
+We're (again) relying on structured outputs to generate the following schema:
 
-### add LLM-adaptable input_type
-Use VLMs to describe the input image as text and add human review on top of that.
+```json
+{
+    "is_answer_correct": bool,
+    "is_justification_correct": bool
+}
+```
 
-### Out-of-Distribution data
+An additional field `both_correct` is obtained through boolean multiplication of the two others.
 
-If applicable, create a subset of riddles that can be regenerated with new values to ensure models are not overfitted on that data.
+The next section focuses on an ensembling strategy used to make the judging setup more robust.
 
-## V2
+### Jury of Judges
 
-### Multilingual support
-Add other languages available on the wiki
+One judge might have more variance or be easily fooled by a justification that only looks correct but is not.
+For this reason, the [`layton-eval`](https://huggingface.co/datasets/rvienne/layton-eval) benchmark dataset uses a jury of judges for estimating the correctness of evaluated models.
+
+Four judges constitute a panel:
+
+- gpt-5.1-high
+- gemini-3-pro-preview-high
+- claude-4.5-opus-thinking_32k
+- mistral-large-2512
+
+Based on the organization the model we evaluate is from, we remove the same-provider jury from the panel (if none, mistral is removed) to avoid any self-preference bias and family bias.
+
+All judges answers are then averaged into discrete float values:
+
+- `answer_correctness` (either 0.0, 0.33, 0.66 or 1.0)
+- `justification_correctness`: (either 0.0, 0.33, 0.66 or 1.0)
+- `both_correctness`: (either 0.0, 0.33, 0.66 or 1.0)
+
+### Annotated Samples
+
+During the development of this project, a lot of frontier model predictions (from gpt-5.1, claude-4.5-opus, gemini-3-pro, gemini-3-flash, mistral-large-2512) were manually judged by a human annotator in parallel.
+
+Having both human and a jury judgements on data points allows us to compute the residuals of the jury (how much the jury output is away from the human annotations) on a curated calibration dataset.
+
+### Prediction-Powered Inference (PPI)
+
+Using this curated dataset, we can estimate, knowing the jury output on another dataset, what would the human annotator have done, if he were given these samples.
+This extrapolation is essentially done using [Prediction-Powered Inference (PPI)](https://arxiv.org/abs/2301.09633).
+
+In our case, the "unlabelled" dataset on which we try to make this estimation is made of all model predictions on each layton-eval riddle.
+The "labelled" dataset on which we compute residuals is called [`layton-eval-ppi`](https://huggingface.co/datasets/rvienne/layton-eval-ppi).
+
+Further pre-processing is applied before computing residuals:
+
+- we filter it to samples having human annotations
+- we filter out samples from other models of the same provider
+
+### Bootstrapped PPI
+
+Thanks to the volume of annotations that were made (approx. 3x the benchmark size, ensuring that bootstrap iterations are diverse parallel universes), we actually have more samples on which to compute residuals than to apply them.
+Using this property of the data and in order to reduce variance further, we decided to compute PPI in a bootstrapped fashion.
+Here's how it works:
+
+- Estimate the jury output distribution for the model we are evaluating by splitting values into bins
+- For each bin, sample the same amount from the preprocessed `layton-eval-ppi` dataset, with replacement.
+We obtain a dataset with `n_riddles` samples and the same jury output distribution, PPI is computed on this dataset.
+
+This process is repeated 1000 times with a different sampling each time, leading to same-distribution, but different samples.
+
+The 1000 PPIs point estimates are then used to compute a 95%-CI interval, using the 2.5 and 97.5 percentile of the PPI values distribution.
+The final score is the mid-value between those two percentiles, such that we can assess with 95% confidence that the model score is somewhere in the [score - CI, score + CI] interval.
+
+At this step, the obtained score represents the metric that anyone can self-report on the benchmark.
+
+### Ranks
+
+Finally, if several models are evaluated, a rank can be determined from scores. Another indicator is derived from the CI-based score, which is the rank spread.
+The rank spread represents the best possible and worst possible rank a model can have in the benchmark (at 95% certainty), by relying on the CI interval obtained above.
+
+The worst possible case is where said model sits at the left-most value of its CI interval while all other sit at the right-most value of their CI interval.
+The best possible case is the opposite: said model sits at the right-most value of its CI interval while all other sit at the left-most value of their CI interval.
