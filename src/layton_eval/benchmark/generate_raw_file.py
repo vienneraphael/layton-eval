@@ -18,7 +18,7 @@ def generate_raw_file(
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "text_riddle.txt")
     file_name = f"benchmark_{split}_hints_{hints}"
     if max_tokens:
-        file_name += "_max_tokens"
+        file_name += f"_max_tokens_{max_tokens}"
     file_name += ".jsonl"
     file_path = settings.root_dir / "raw_files" / file_name
     total_chars = 0
