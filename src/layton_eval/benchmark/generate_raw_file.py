@@ -12,8 +12,8 @@ def generate_raw_file(
     split: t.Literal["vlm", "llm"], max_tokens: int | None = None, hints: int = 0
 ):
     df = pl.read_ndjson(
-        "hf://datasets/rvienne/layton-eval/layton_eval_llm.jsonl", infer_schema_length=100000
-    ).filter(pl.col("split") == split)
+        f"hf://datasets/rvienne/layton-eval/layton_eval_{split}.jsonl", infer_schema_length=100000
+    )
     image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "visual_riddle.txt")
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark" / "text_riddle.txt")
     file_name = f"benchmark_{split}_hints_{hints}"
