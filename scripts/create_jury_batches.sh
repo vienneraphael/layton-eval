@@ -50,6 +50,11 @@ else
     excluded_provider=""
 fi
 
+# If excluded_provider is not one of the four valid providers, default to mistral
+if [[ "$excluded_provider" != "openai" && "$excluded_provider" != "gemini" && "$excluded_provider" != "anthropic" && "$excluded_provider" != "mistral" ]]; then
+    excluded_provider="mistral"
+fi
+
 echo "Creating jury batches for raw file: $raw_file_path"
 if [ -n "$excluded_provider" ]; then
     echo "Excluding judges from same provider: $excluded_provider"
