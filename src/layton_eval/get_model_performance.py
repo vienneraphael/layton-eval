@@ -81,7 +81,7 @@ def get_model_performance(
     score = (ppi_ci_upper + ppi_ci_lower) / 2
     return {
         "score": (score * 100).round(1).item(),
-        "95% CI (±)": (np.floor(spread * 100 * 10) + 1) / 10,
+        "95% CI (±)": (np.floor(spread * 100 * 10) + 1).item() / 10,
     }
 
 
