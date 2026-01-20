@@ -63,7 +63,7 @@ The terminal output should show a path where results were downloaded as a `.json
 
 Run the following command, to prepare the jury batch:
 ```bash
-./scripts/prepare_jury_batch.sh --results-file-path results/your-results-file.jsonl
+./scripts/prepare_jury_batches.sh --results-file-path results/your-results-file.jsonl
 ```
 You should see the 3 judge batches that were created, each of them will be sent to a different provider to assess the correctness of the model.
 
