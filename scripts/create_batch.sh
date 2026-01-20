@@ -77,8 +77,22 @@ if [ -n "$max_tokens" ] || [ "$provider" = "anthropic" ] || [ "$provider" = "tog
 else
     raw_file_path="./raw_files/benchmark_${split}_hints_${hints}.jsonl"
 fi
-processed_file_path="./processed_files/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}.jsonl"
-results_file_path="./results/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}.jsonl"
+
+# Build suffix for thinking parameters
+suffix=""
+if [ -n "$thinking_level" ]; then
+    suffix="${suffix}_thinking_${thinking_level}"
+fi
+if [ -n "$thinking_budget" ]; then
+    budget_k=$((thinking_budget / 1000))
+    suffix="${suffix}_thinking_${budget_k}k"
+fi
+if [ "$provider" = "anthropic" ] && [ -z "$thinking_budget" ]; then
+    suffix="${suffix}_nothinking"
+fi
+
+processed_file_path="./processed_files/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}${suffix}.jsonl"
+results_file_path="./results/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}${suffix}.jsonl"
 echo "Creating batch: $batch_name"
 
 # Build description with optional thinking parameters
