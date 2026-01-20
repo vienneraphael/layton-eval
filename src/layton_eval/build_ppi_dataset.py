@@ -3,7 +3,7 @@ import glob
 from layton_eval.settings import settings
 
 def get_predictions_df():
-    return pl.read_ndjson(glob.glob("../../results/benchmark_*.jsonl"), include_file_paths="source_file")["custom_id", "answer", "source_file"].with_columns(
+    return pl.read_ndjson(glob.glob("results/benchmark_*.jsonl"), include_file_paths="source_file")["custom_id", "answer", "source_file"].with_columns(
         pl.col("answer").str.json_decode(dtype=pl.Struct(fields={"answer": pl.String, "justification": pl.String})).struct.unnest(),
         (
             pl.col("source_file").str.split("_").list.get(2) +
@@ -67,12 +67,13 @@ def main(prefixes: list[str]):
 
 if __name__ == "__main__":
     prefixes = [
-        "../../results/judge_gemini_gemini-3-pro-preview_llm_hints_0",
-        "../../results/judge_gemini_gemini-3-flash-preview_llm_hints_0",
-        "../../results/judge_openai_gpt-5-1_llm_hints_0",
-        "../../results/judge_openai_gpt-5-2_llm_hints_0",
-        "../../results/judge_anthropic_claude-opus-4-5_llm_hints_0_thinking_32k",
-        "../../results/judge_anthropic_claude-opus-4-5_llm_hints_0_nothinking",
-        "../../results/judge_mistral_mistral-large-2512_llm_hints_0"
+        "results/judge_gemini_gemini-3-pro-preview_llm_hints_0",
+        "results/judge_gemini_gemini-3-flash-preview_llm_hints_0",
+        "results/judge_openai_gpt-5-1_llm_hints_0",
+        "results/judge_openai_gpt-5-2_llm_hints_0",
+        "results/judge_anthropic_claude-opus-4-5_llm_hints_0_thinking_32k",
+        "results/judge_anthropic_claude-opus-4-5_llm_hints_0_nothinking",
+        "results/judge_mistral_mistral-large-2512_llm_hints_0",
+        "results/judge_together_moonshotai-Kimi-K2-Thinking_llm_hints_0"
     ]
     main(prefixes=prefixes)
