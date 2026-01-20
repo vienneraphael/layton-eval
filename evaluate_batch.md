@@ -75,6 +75,11 @@ Run the following command, to prepare the jury batch:
 ./scripts/prepare_jury_batches.sh --results-file-path results/your-results-file.jsonl
 ```
 
+> [!IMPORTANT]  
+> This script might fail if the provider/model couple produced invalid JSON (happens for some models on together for instance).
+> In that case, you can run the json repair script (which updates the jsonl file in-place) with this command:
+> `python src/layton-eval/repair_jsonl_file.py --file-path path/to/your/file.jsonl`
+
 You should see the 3 judge batches that were created, each of them will be sent to a different provider to assess the correctness of the model.
 
 For each judge batch in the terminal output, run:
