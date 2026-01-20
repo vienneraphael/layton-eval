@@ -62,8 +62,6 @@ In [`layton-eval`](https://huggingface.co/datasets/rvienne/layton-eval), models 
 }
 ```
 
-Having structured outputs generation at the core of the benchmark prediction creates a barrier-to-entry where models failing to generate valid JSON for a given riddle automatically fail said riddle.
-
 Since some riddles have a very narrow range of possible answers (like choosing from A, B, C or D), we try to limit false positives of a model having the right answer "by luck" by also asking models to generate a justification for their answer!
 
 The idea is to estimate a metric representing the percentage of the times a model gives a valid answer, meaning the answer is the right one and the justification backing it up also makes sense.

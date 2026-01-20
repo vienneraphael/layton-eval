@@ -3,6 +3,7 @@ import json
 import typing as t
 
 import polars as pl
+from json_repair import repair_json
 
 from layton_eval.settings import settings
 from layton_eval.utils import load_txt
@@ -85,7 +86,10 @@ def generate_raw_file(
                 }
             )
             total_chars += len(row.get("justification"))
-            answer_dict = json.loads(row.get("answer_results"))
+            try:
+                answer_dict = json.loads(row.get("answer_results"))
+            except json.JSONDecodeError:
+                answer_dict = json.loads(repair_json(row.get("answer_results")))
             content.append(
                 {
                     "type": "text",
