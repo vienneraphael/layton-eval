@@ -12,9 +12,7 @@ from layton_eval.utils import load_txt
 def generate_raw_file(
     split: t.Literal["vlm", "llm"], max_tokens: bool = False, results_file_path: str = None
 ):
-    df = pl.read_ndjson(settings.root_dir / "datasets" / "layton_eval.jsonl").filter(
-        pl.col("split") == split
-    )
+    df = pl.read_ndjson(f"hf://datasets/rvienne/layton-eval/layton_eval_{split}.jsonl")
     file_name = results_file_path.split("/")[-1].replace("benchmark_", "judge_")
     image_prompt = load_txt(settings.root_dir / "prompts" / "benchmark_judge" / "visual_riddle.txt")
     text_prompt = load_txt(settings.root_dir / "prompts" / "benchmark_judge" / "text_riddle.txt")
