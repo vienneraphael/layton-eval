@@ -71,7 +71,6 @@ if [ -z "$hints" ]; then
 fi
 
 model_sanitized=$(echo "$model" | sed 's/[^a-zA-Z0-9-]/-/g')
-batch_name="benchmark_${model_sanitized}_${split}_hints_${hints}"
 if [ -n "$max_tokens" ] || [ "$provider" = "anthropic" ] || [ "$provider" = "together" ]; then
     raw_file_path="./raw_files/benchmark_${split}_hints_${hints}_max_tokens_${max_tokens}.jsonl"
 else
@@ -91,6 +90,7 @@ if [ "$provider" = "anthropic" ] && [ -z "$thinking_budget" ]; then
     suffix="${suffix}_nothinking"
 fi
 
+batch_name="benchmark_${model_sanitized}_${split}_hints_${hints}${suffix}"
 processed_file_path="./processed_files/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}${suffix}.jsonl"
 results_file_path="./results/benchmark_${provider}_${model_sanitized}_${split}_hints_${hints}${suffix}.jsonl"
 echo "Creating batch: $batch_name"
