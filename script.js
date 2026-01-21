@@ -694,24 +694,52 @@ function renderRiddleDetail(riddleId) {
     hintsSection.className = 'hints-section';
     
     const hints = [
-        { label: 'First Hint', text: riddle.first_hint },
-        { label: 'Second Hint', text: riddle.second_hint },
-        { label: 'Third Hint', text: riddle.third_hint },
-        { label: 'Special Hint', text: riddle.special_hint }
-    ];
+        { id: 'hint1', label: 'First Hint', text: riddle.first_hint },
+        { id: 'hint2', label: 'Second Hint', text: riddle.second_hint },
+        { id: 'hint3', label: 'Third Hint', text: riddle.third_hint },
+        { id: 'hintS', label: 'Special Hint', text: riddle.special_hint }
+    ].filter(h => h.text);
 
-    hints.forEach(h => {
-        if (!h.text) return; // Hide if null
+    if (hints.length > 0) {
+        // Tab Headers
+        const tabHeader = document.createElement('div');
+        tabHeader.className = 'hints-tabs';
         
-        const details = document.createElement('details');
-        details.className = 'hint-accordion';
-        details.innerHTML = `
-            <summary>${h.label}</summary>
-            <div class="hint-content">${h.text}</div>
-        `;
-        hintsSection.appendChild(details);
-    });
-    container.appendChild(hintsSection);
+        // Content Container
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'hints-content-container';
+
+        hints.forEach((h, index) => {
+            // Button
+            const btn = document.createElement('button');
+            btn.className = `hint-tab-btn ${index === 0 ? 'active' : ''}`;
+            btn.textContent = h.label;
+            
+            // Pane
+            const pane = document.createElement('div');
+            pane.id = `pane-${h.id}`; // Unique ID within modal
+            pane.className = `hint-tab-pane ${index === 0 ? 'active' : ''}`;
+            pane.textContent = h.text;
+            contentContainer.appendChild(pane);
+
+            // Click Handler
+            btn.onclick = () => {
+                // Deactivate all
+                tabHeader.querySelectorAll('.hint-tab-btn').forEach(b => b.classList.remove('active'));
+                contentContainer.querySelectorAll('.hint-tab-pane').forEach(p => p.classList.remove('active'));
+                
+                // Activate clicked
+                btn.classList.add('active');
+                pane.classList.add('active');
+            };
+            
+            tabHeader.appendChild(btn);
+        });
+
+        hintsSection.appendChild(tabHeader);
+        hintsSection.appendChild(contentContainer);
+        container.appendChild(hintsSection);
+    }
 
     // Model Predictions & Judges
     const predHeader = document.createElement('h3');

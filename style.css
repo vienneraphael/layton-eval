@@ -442,38 +442,60 @@ svg {
 
 .hints-section {
     margin-bottom: 2rem;
-}
-
-.hint-accordion details {
-    background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background-color: var(--bg-surface);
+    overflow: hidden;
 }
 
-.hint-accordion summary {
-    padding: 0.8rem;
-    cursor: pointer;
-    font-weight: 500;
-    list-style: none; /* Hide default triangle */
+.hints-tabs {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background-color: var(--bg-surface-hover);
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
 }
 
-.hint-accordion summary::after {
-    content: '+';
-    font-weight: bold;
+.hint-tab-btn {
+    background: none;
+    border: none;
+    padding: 0.8rem 1.2rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    border-right: 1px solid var(--border-color);
+    transition: all 0.2s;
+    white-space: nowrap;
+    position: relative;
 }
 
-.hint-accordion details[open] summary::after {
-    content: '-';
-}
-
-.hint-content {
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
+.hint-tab-btn:hover {
+    background-color: var(--bg-surface);
     color: var(--text-main);
+}
+
+.hint-tab-btn.active {
+    background-color: var(--bg-surface);
+    color: var(--text-header);
+    box-shadow: inset 0 3px 0 0 var(--primary);
+}
+
+.hints-content-container {
+    padding: 1.5rem;
+    background-color: var(--bg-surface);
+    min-height: 100px;
+}
+
+.hint-tab-pane {
+    display: none;
+    color: var(--text-main);
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.hint-tab-pane.active {
+    display: block;
+    animation: fadeIn 0.2s;
 }
 
 .judge-scorecard {
