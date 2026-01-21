@@ -11,7 +11,7 @@ def repair_jsonl_file(file_path: str):
             repaired_lines.append(json.dumps(d))
     with open(file_path, "w") as f:
         for line in repaired_lines:
-            f.write(line + "\n\n")
+            f.write(line + "\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
