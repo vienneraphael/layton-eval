@@ -205,64 +205,133 @@ svg {
 }
 
 /* Visualizer */
-.visualizer-layout {
-    display: flex;
-    min-height: 100%;
+.visualizer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
-.riddle-sidebar {
-    width: 300px;
-    background-color: var(--bg-surface);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: calc(100vh - 85px);
-}
-
-.sidebar-header {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
+.visualizer-header {
+    margin-bottom: 2rem;
 }
 
 #riddle-search {
     width: 100%;
-    padding: 0.5rem;
-    background-color: var(--bg-body);
+    max-width: 400px;
+    padding: 0.8rem 1rem;
+    background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     color: var(--text-main);
-    border-radius: 6px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
 }
 
-#riddle-list {
-    list-style: none;
-    overflow-y: auto;
-    flex: 1;
+#riddle-search:focus {
+    outline: none;
+    border-color: var(--primary);
 }
 
-.riddle-item {
-    padding: 0.75rem 1rem;
+.riddle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.riddle-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
     cursor: pointer;
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.1s;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-.riddle-item:hover {
-    background-color: var(--bg-surface-hover);
+.riddle-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    border-color: var(--text-muted);
 }
 
-.riddle-item.active {
-    background-color: rgba(37, 99, 235, 0.1); /* Low opacity primary */
-    border-left: 3px solid var(--primary);
+.riddle-card h3 {
+    color: var(--text-header);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
 }
 
-.riddle-detail {
-    flex: 1;
-    overflow-y: auto;
+.riddle-card .card-id {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-family: monospace;
+}
+
+.riddle-card .card-meta {
+    margin-top: auto;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding-top: 1rem;
+}
+
+/* Modal */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 100; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.8); 
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: var(--bg-body);
+    margin: 5vh auto; /* 5% from the top and centered */
     padding: 2rem;
+    border: 1px solid var(--border-color);
+    width: 90%;
     max-width: 1000px;
-    margin: 0 auto;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+
+.close-modal {
+    color: var(--text-muted);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: var(--text-header);
+    text-decoration: none;
+}
+
+/* Reusing Detail View Styles inside Modal */
+.riddle-detail {
+    /* No longer a flex child */
+    padding: 0;
+    max-width: none;
+    margin: 0;
 }
 
 .riddle-title {

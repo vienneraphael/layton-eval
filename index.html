@@ -66,22 +66,26 @@
 
             <!-- Tab 2: Visualizer -->
             <section id="visualizer" class="tab-pane">
-                <div class="visualizer-layout">
-                    <aside class="riddle-sidebar">
-                        <div class="sidebar-header">
-                            <input type="text" id="riddle-search" placeholder="Search ID...">
-                        </div>
-                        <ul id="riddle-list">
-                            <!-- Riddle IDs populated by JS -->
-                        </ul>
-                    </aside>
-                    <div class="riddle-detail" id="riddle-detail-view">
-                        <div class="empty-state">Select a riddle to view details</div>
-                        <!-- Content populated by JS -->
+                <div class="visualizer-container">
+                    <div class="visualizer-header">
+                        <input type="text" id="riddle-search" placeholder="Search ID, Name or Category...">
+                    </div>
+                    <div id="riddle-grid" class="riddle-grid">
+                        <!-- Cards populated by JS -->
                     </div>
                 </div>
             </section>
         </main>
+
+        <!-- Modal -->
+        <div id="riddle-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <div id="modal-body">
+                    <!-- Detail content populated by JS -->
+                </div>
+            </div>
+        </div>
 
         <footer class="site-footer">
             <p>The Layton Benchmark v4.0</p>

@@ -49,9 +49,11 @@ const elements = {
     tabPanes: document.querySelectorAll('.tab-pane'),
     leaderboardBody: document.querySelector('#leaderboard-table tbody'),
     rankChart: document.getElementById('rank-chart'),
-    riddleList: document.getElementById('riddle-list'),
+    riddleGrid: document.getElementById('riddle-grid'),
     riddleSearch: document.getElementById('riddle-search'),
-    riddleDetail: document.getElementById('riddle-detail-view')
+    modal: document.getElementById('riddle-modal'),
+    modalBody: document.getElementById('modal-body'),
+    closeModal: document.querySelector('.close-modal')
 };
 
 // Init
@@ -75,7 +77,20 @@ function initEventListeners() {
 
     // Riddle Search
     elements.riddleSearch.addEventListener('input', (e) => {
-        filterRiddleList(e.target.value);
+        filterRiddleGrid(e.target.value);
+    });
+
+    // Modal Events
+    elements.closeModal.addEventListener('click', closeModal);
+    window.addEventListener('click', (e) => {
+        if (e.target === elements.modal) {
+            closeModal();
+        }
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && elements.modal.style.display === 'block') {
+            closeModal();
+        }
     });
 }
 
@@ -426,6 +441,8 @@ function renderRankChart(data) {
 // --- Visualizer Logic ---
 
 function populateRiddleList() {
+    // Legacy function name kept for compatibility with loadSplit calling onDataLoaded
+    // But now it populates the grid
     const splitData = state.cache[state.currentSplit];
     const riddlesMap = splitData.riddles;
     if (!riddlesMap) return;
@@ -436,8 +453,8 @@ function populateRiddleList() {
         splitData.ppi.forEach(p => validRiddleIds.add(p.riddle_id));
     }
 
-    const list = elements.riddleList;
-    list.innerHTML = '';
+    const grid = elements.riddleGrid;
+    grid.innerHTML = '';
 
     // Convert to array, filter by valid IDs, and sort
     const riddles = Array.from(riddlesMap.values())
@@ -446,58 +463,43 @@ function populateRiddleList() {
         .sort((a, b) => a.id.localeCompare(b.id));
 
     riddles.forEach(r => {
-        const li = document.createElement('li');
-        li.className = 'riddle-item';
-        li.textContent = r.id;
-        li.dataset.id = r.id;
-        li.onclick = () => selectRiddle(r.id);
-        list.appendChild(li);
+        const card = createRiddleCard(r);
+        grid.appendChild(card);
     });
 }
 
-function filterRiddleList(query) {
-    const items = elements.riddleList.getElementsByTagName('li');
-    query = query.toLowerCase();
-    for (let item of items) {
-        const match = item.textContent.toLowerCase().includes(query);
-        item.style.display = match ? 'block' : 'none';
-    }
+function createRiddleCard(riddle) {
+    const card = document.createElement('div');
+    card.className = 'riddle-card';
+    card.dataset.id = riddle.id;
+    card.dataset.search = (riddle.id + ' ' + getRiddleTitle(riddle) + ' ' + (riddle.category || '')).toLowerCase();
+    
+    card.onclick = () => openModal(riddle.id);
+
+    // ID
+    const idSpan = document.createElement('div');
+    idSpan.className = 'card-id';
+    idSpan.textContent = riddle.id;
+    card.appendChild(idSpan);
+
+    // Title
+    const title = document.createElement('h3');
+    title.textContent = getRiddleTitle(riddle);
+    card.appendChild(title);
+
+    // Meta
+    const meta = document.createElement('div');
+    meta.className = 'card-meta';
+    meta.innerHTML = `
+        <span class="badge badge-category">${riddle.category || 'Unknown'}</span>
+        <span class="badge">${riddle.picarats || '?'} Picarats</span>
+    `;
+    card.appendChild(meta);
+
+    return card;
 }
 
-function selectRiddle(riddleId) {
-    state.selectedRiddleId = riddleId;
-    
-    // Highlight in list
-    const items = elements.riddleList.getElementsByTagName('li');
-    for (let item of items) {
-        item.classList.toggle('active', item.dataset.id === riddleId);
-    }
-
-    renderRiddleDetail(riddleId);
-    
-    // Scroll to top of the visualizer/tab pane
-    document.getElementById('visualizer').scrollTop = 0;
-}
-
-function renderRiddleDetail(riddleId) {
-    const splitData = state.cache[state.currentSplit];
-    const riddle = splitData.riddles.get(riddleId);
-    
-    // Get all predictions for this riddle
-    const predictions = splitData.ppi.filter(p => p.riddle_id === riddleId);
-
-    const container = elements.riddleDetail;
-    container.innerHTML = '';
-
-    if (!riddle) {
-        container.innerHTML = '<div class="empty-state">Riddle not found</div>';
-        return;
-    }
-
-    // Header
-    const h2 = document.createElement('h2');
-    
-    // Parse title from URL
+function getRiddleTitle(riddle) {
     let title = `Riddle ${riddle.id}`;
     if (riddle.url && riddle.url.includes('Puzzle:')) {
         try {
@@ -510,9 +512,52 @@ function renderRiddleDetail(riddleId) {
             console.warn('Failed to parse title', e);
         }
     }
+    return title;
+}
+
+function filterRiddleGrid(query) {
+    const cards = elements.riddleGrid.getElementsByClassName('riddle-card');
+    query = query.toLowerCase();
+    for (let card of cards) {
+        const match = card.dataset.search.includes(query);
+        card.style.display = match ? 'flex' : 'none';
+    }
+}
+
+function openModal(riddleId) {
+    state.selectedRiddleId = riddleId;
+    renderRiddleDetail(riddleId);
+    elements.modal.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeModal() {
+    elements.modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    state.selectedRiddleId = null;
+}
+
+function renderRiddleDetail(riddleId) {
+    const splitData = state.cache[state.currentSplit];
+    const riddle = splitData.riddles.get(riddleId);
     
-    h2.textContent = title;
-    // Styles moved to CSS class .riddle-title
+    // Get all predictions for this riddle
+    const predictions = splitData.ppi.filter(p => p.riddle_id === riddleId);
+
+    const container = elements.modalBody;
+    container.innerHTML = '';
+    
+    // Add class for styling reuse
+    container.className = 'riddle-detail';
+
+    if (!riddle) {
+        container.innerHTML = '<div class="empty-state">Riddle not found</div>';
+        return;
+    }
+
+    // Header
+    const h2 = document.createElement('h2');
+    h2.textContent = getRiddleTitle(riddle);
     h2.className = 'riddle-title';
     container.appendChild(h2);
 
@@ -632,25 +677,14 @@ function renderRiddleDetail(riddleId) {
             // Judges
             const scorecard = document.createElement('div');
             scorecard.className = 'judge-scorecard';
-
-            // Find valid judges (keys starting with is_answer_correct_)
-            // Spec: "Exactly 3 of 4 will be non-null"
-            // Keys: is_answer_correct_MODELNAME, is_justification_correct_MODELNAME, both_correct_MODELNAME
-            // We need to extract the judge names.
-            
-            // Regex to find judge names from keys
-            const judgeKeys = Object.keys(pred).filter(k => k.startsWith('both_correct_'));
             
             // Also Human
             if (pred.human_both_correct !== null) {
                 scorecard.appendChild(createJudgeCard('Human', pred.human_answer_correct, pred.human_justification_correct, pred.human_both_correct));
-            } else {
-                // "No human annotation available" - spec says display this if null. 
-                // But if we have other judges, maybe just don't show human card or show it as disabled?
-                // Spec says: "If human... null, the UI must display 'No human annotation available.'"
-                // I'll add a text if strictly requested, or just omit. 
-                // Let's omit for clean UI unless no judges at all.
             }
+
+            // Regex to find judge names from keys
+            const judgeKeys = Object.keys(pred).filter(k => k.startsWith('both_correct_'));
 
             judgeKeys.forEach(key => {
                 const judgeName = key.replace('both_correct_', '');
