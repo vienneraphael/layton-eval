@@ -207,7 +207,7 @@ svg {
 /* Visualizer */
 .visualizer-layout {
     display: flex;
-    height: 100%;
+    min-height: 100%;
 }
 
 .riddle-sidebar {
@@ -216,6 +216,9 @@ svg {
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 85px);
 }
 
 .sidebar-header {
@@ -449,5 +452,6 @@ svg {
         height: 200px;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
+        position: static;
     }
 }

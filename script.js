@@ -474,6 +474,9 @@ function selectRiddle(riddleId) {
     }
 
     renderRiddleDetail(riddleId);
+    
+    // Scroll to top of the visualizer/tab pane
+    document.getElementById('visualizer').scrollTop = 0;
 }
 
 function renderRiddleDetail(riddleId) {
