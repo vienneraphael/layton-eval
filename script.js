@@ -442,6 +442,7 @@ function populateRiddleList() {
     // Convert to array, filter by valid IDs, and sort
     const riddles = Array.from(riddlesMap.values())
         .filter(r => validRiddleIds.has(r.id))
+        .filter(r => state.currentSplit === 'full' || r.split === state.currentSplit)
         .sort((a, b) => a.id.localeCompare(b.id));
 
     riddles.forEach(r => {
