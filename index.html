@@ -14,7 +14,7 @@
         <header class="site-header">
             <div class="header-content">
                 <div class="logo">
-                    <h1>🎩 The Layton Benchmark</h1>
+                    <h1>🎩 Layton Eval Benchmark</h1>
                 </div>
                 <div class="controls">
                     <div class="split-selector">
@@ -43,8 +43,8 @@
                                 <tr>
                                     <th class="sortable" data-sort="rank">Rank</th>
                                     <th class="sortable" data-sort="model">Model</th>
-                                    <th class="sortable" data-sort="score">Score (PPI)</th>
-                                    <th class="sortable" data-sort="ci">95% CI</th>
+                                    <th class="sortable" data-sort="score">Score</th>
+                                    <th class="sortable" data-sort="ci">95% CI (±)</th>
                                     <th class="sortable mobile-hide" data-sort="rank_spread">Rank Spread</th>
                                     <th class="sortable mobile-hide" data-sort="provider">Provider</th>
                                 </tr>
@@ -55,7 +55,7 @@
                         </table>
                     </div>
                     <div class="chart-container">
-                        <h3>Rank Range (95% CI)</h3>
+                        <h3>Confidence Intervals on Model Score</h3>
                         <div id="rank-chart">
                             <!-- SVG Chart will be rendered here -->
                         </div>

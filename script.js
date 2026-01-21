@@ -21,11 +21,12 @@ const SPLITS = {
 
 const PROVIDER_COLORS = {
     'openai': '#10a37f',
-    'anthropic': '#da7756',
-    'google': '#4285f4',
-    'gemini': '#4285f4',
-    'mistral': '#fd6f00',
+    'anthropic': '#f4a261',
+    'google': '#4dabf7',
+    'gemini': '#4dabf7',
+    'mistral': '#fcd53f',
     'meta': '#0668E1',
+    'together': '#0055ff',
     'default': '#6b7280'
 };
 
@@ -229,18 +230,36 @@ function renderRankChart(data) {
     container.innerHTML = '';
 
     const width = container.clientWidth || 800;
-    const height = data.length * 40 + 50; // Dynamic height
-    const padding = { top: 20, right: 30, bottom: 30, left: 150 };
+    const height = 600; // Increased height
+    const padding = { top: 50, right: 30, bottom: 200, left: 60 }; // Increased bottom padding
     
-    // Find max rank to scale X
-    // Usually max rank is number of models, but let's parse spreads
-    let maxRank = 0;
-    data.forEach(d => {
-        const parts = d.rank_spread.split('<-->').map(s => parseInt(s.trim()));
-        if (parts[1] > maxRank) maxRank = parts[1];
-    });
-    if (maxRank === 0) maxRank = data.length;
+    // Detect Score Range (0-1 or 0-100)
+    let maxScore = 100;
+    const allScoresSmall = data.every(d => d.score <= 1);
+    if (allScoresSmall) maxScore = 1;
 
+    // Calculate dynamic Y-axis range (Scores)
+    let minDataScore = maxScore;
+    let maxDataScore = 0;
+    
+    data.forEach(d => {
+        const ci = d['95% CI (±)'];
+        const low = d.score - ci;
+        const high = d.score + ci;
+        if (low < minDataScore) minDataScore = low;
+        if (high > maxDataScore) maxDataScore = high;
+    });
+
+    const paddingVal = allScoresSmall ? 0.05 : 5;
+    let axisMin = Math.max(0, minDataScore - paddingVal);
+    let axisMax = Math.min(maxScore, maxDataScore + paddingVal);
+
+    if (axisMin >= axisMax) {
+        axisMin = 0;
+        axisMax = maxScore;
+    }
+
+    const chartHeight = height - padding.top - padding.bottom;
     const chartWidth = width - padding.left - padding.right;
     
     // SVG
@@ -249,69 +268,154 @@ function renderRankChart(data) {
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
     
-    // X Scale function
-    const xScale = (rank) => (rank / maxRank) * chartWidth;
+    // Y Scale function (Score)
+    const yScale = (score) => {
+        // Inverted: Max score at top (padding.top), Min score at bottom
+        return padding.top + chartHeight - ((score - axisMin) / (axisMax - axisMin)) * chartHeight;
+    };
 
-    // Axis
-    const axisLine = document.createElementNS(svgNS, "line");
-    axisLine.setAttribute("x1", padding.left);
-    axisLine.setAttribute("y1", height - padding.bottom);
-    axisLine.setAttribute("x2", width - padding.right);
-    axisLine.setAttribute("y2", height - padding.bottom);
-    axisLine.setAttribute("stroke", "var(--border-color)");
-    svg.appendChild(axisLine);
+    // X Scale function (Model Index)
+    const xScale = (index) => {
+        const step = chartWidth / data.length;
+        return padding.left + step * index + step / 2;
+    };
 
-    // Draw lines
-    data.forEach((row, index) => {
-        const y = padding.top + index * 40;
-        const parts = row.rank_spread.split('<-->').map(s => parseInt(s.trim()));
-        const startRank = parts[0];
-        const endRank = parts[1];
+    // Draw Grid Lines (Horizontal)
+    const tickCount = 10;
+    for (let i = 0; i <= tickCount; i++) {
+        const val = axisMin + (i / tickCount) * (axisMax - axisMin);
+        const y = yScale(val);
         
-        const x1 = padding.left + xScale(startRank);
-        const x2 = padding.left + xScale(endRank);
-        
-        // Color
-        const color = PROVIDER_COLORS[row.provider] || PROVIDER_COLORS['default'];
-
-        // Group
-        const g = document.createElementNS(svgNS, "g");
+        // Grid Line
+        const gridLine = document.createElementNS(svgNS, "line");
+        gridLine.setAttribute("x1", padding.left);
+        gridLine.setAttribute("y1", y);
+        gridLine.setAttribute("x2", width - padding.right);
+        gridLine.setAttribute("y2", y);
+        gridLine.setAttribute("stroke", "var(--border-color)");
+        gridLine.setAttribute("stroke-opacity", "0.3");
+        svg.appendChild(gridLine);
 
         // Label
         const text = document.createElementNS(svgNS, "text");
         text.setAttribute("x", padding.left - 10);
-        text.setAttribute("y", y + 5);
+        text.setAttribute("y", y + 4);
         text.setAttribute("text-anchor", "end");
-        text.setAttribute("fill", "var(--text-main)");
-        text.setAttribute("font-size", "12px");
-        text.textContent = row.model;
-        g.appendChild(text);
+        text.setAttribute("fill", "var(--text-muted)");
+        text.setAttribute("font-size", "10px");
+        text.textContent = val.toFixed(allScoresSmall ? 2 : 0);
+        svg.appendChild(text);
+    }
 
-        // Line
+    // Draw Grid Lines (Vertical) - Model Ticks
+    data.forEach((_, index) => {
+        const x = xScale(index);
+        
+        const gridLine = document.createElementNS(svgNS, "line");
+        gridLine.setAttribute("x1", x);
+        gridLine.setAttribute("y1", padding.top);
+        gridLine.setAttribute("x2", x);
+        gridLine.setAttribute("y2", height - padding.bottom);
+        gridLine.setAttribute("stroke", "var(--border-color)");
+        gridLine.setAttribute("stroke-opacity", "0.3");
+        svg.appendChild(gridLine);
+    });
+
+    // Draw Data Points
+    data.forEach((row, index) => {
+        const x = xScale(index);
+        const score = row.score;
+        const ci = row['95% CI (±)'];
+        const color = PROVIDER_COLORS[row.provider] || PROVIDER_COLORS['default'];
+
+        const yScore = yScale(score);
+        const yHigh = yScale(score + ci); // Higher score -> Smaller Y
+        const yLow = yScale(score - ci);  // Lower score -> Larger Y
+
+        const g = document.createElementNS(svgNS, "g");
+
+        // Rank Spread Text
+        let rankSpreadText = row.rank_spread;
+        const spreadParts = row.rank_spread.split('<-->').map(s => s.trim());
+        if (spreadParts.length === 2) {
+            if (spreadParts[0] === spreadParts[1]) {
+                rankSpreadText = spreadParts[0];
+            } else {
+                rankSpreadText = `${spreadParts[0]}-${spreadParts[1]}`;
+            }
+        }
+
+        // Vertical CI Line
         const line = document.createElementNS(svgNS, "line");
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", y);
-        line.setAttribute("x2", x2);
-        line.setAttribute("y2", y);
+        line.setAttribute("x1", x);
+        line.setAttribute("y1", yLow);
+        line.setAttribute("x2", x);
+        line.setAttribute("y2", yHigh);
         line.setAttribute("stroke", color);
-        line.setAttribute("stroke-width", "4");
-        line.setAttribute("stroke-linecap", "round");
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("opacity", "0.6");
         g.appendChild(line);
 
-        // Dots at ends
-        const c1 = document.createElementNS(svgNS, "circle");
-        c1.setAttribute("cx", x1);
-        c1.setAttribute("cy", y);
-        c1.setAttribute("r", "4");
-        c1.setAttribute("fill", color);
-        g.appendChild(c1);
+        // Caps
+        const capWidth = 10;
+        
+        // Top Cap (Higher Score)
+        const cap1 = document.createElementNS(svgNS, "line");
+        cap1.setAttribute("x1", x - capWidth/2);
+        cap1.setAttribute("y1", yHigh);
+        cap1.setAttribute("x2", x + capWidth/2);
+        cap1.setAttribute("y2", yHigh);
+        cap1.setAttribute("stroke", color);
+        cap1.setAttribute("stroke-width", "2");
+        g.appendChild(cap1);
 
-        const c2 = document.createElementNS(svgNS, "circle");
-        c2.setAttribute("cx", x2);
-        c2.setAttribute("cy", y);
-        c2.setAttribute("r", "4");
-        c2.setAttribute("fill", color);
-        g.appendChild(c2);
+        // Bottom Cap (Lower Score)
+        const cap2 = document.createElementNS(svgNS, "line");
+        cap2.setAttribute("x1", x - capWidth/2);
+        cap2.setAttribute("y1", yLow);
+        cap2.setAttribute("x2", x + capWidth/2);
+        cap2.setAttribute("y2", yLow);
+        cap2.setAttribute("stroke", color);
+        cap2.setAttribute("stroke-width", "2");
+        g.appendChild(cap2);
+
+        // Score Point
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", yScore);
+        circle.setAttribute("r", "4");
+        circle.setAttribute("fill", "var(--bg-surface)"); // Use theme var
+        circle.setAttribute("stroke", color);
+        circle.setAttribute("stroke-width", "2");
+        g.appendChild(circle);
+
+        // Rank Spread Label (Above Top Cap)
+        const spreadLabel = document.createElementNS(svgNS, "text");
+        spreadLabel.setAttribute("x", x);
+        spreadLabel.setAttribute("y", yHigh - 8);
+        spreadLabel.setAttribute("text-anchor", "middle");
+        spreadLabel.setAttribute("fill", "var(--text-muted)");
+        spreadLabel.setAttribute("font-size", "10px");
+        spreadLabel.textContent = rankSpreadText;
+        g.appendChild(spreadLabel);
+
+        // Model Name Label (Rotated on X-Axis)
+        const labelY = height - padding.bottom + 15;
+        const nameLabel = document.createElementNS(svgNS, "text");
+        nameLabel.setAttribute("x", x);
+        nameLabel.setAttribute("y", labelY);
+        nameLabel.setAttribute("text-anchor", "end"); // Anchor end for 45 deg rotation to align well?
+        // Actually for -45 or -90, end anchor works best if we position at the tick mark
+        // Let's use 45 degrees, which usually goes down-right.
+        // If we want it like the screenshot (vertical or angled), let's try 45.
+        // Rotated 45 degrees around (x, labelY)
+        nameLabel.setAttribute("transform", `rotate(45, ${x}, ${labelY})`);
+        nameLabel.setAttribute("text-anchor", "start"); // Start of text at the tick
+        nameLabel.setAttribute("fill", color); // Use provider color
+        nameLabel.setAttribute("font-size", "11px");
+        nameLabel.setAttribute("font-weight", "500");
+        nameLabel.textContent = row.model;
+        g.appendChild(nameLabel);
 
         svg.appendChild(g);
     });

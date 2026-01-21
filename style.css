@@ -29,6 +29,10 @@ body {
     flex-direction: column;
 }
 
+svg text {
+    font-family: var(--font-family);
+}
+
 .app-container {
     display: flex;
     flex-direction: column;
@@ -193,8 +197,11 @@ tbody tr:hover {
 
 #rank-chart {
     width: 100%;
-    height: 400px; /* Base height, adjustable via JS */
-    overflow-x: auto;
+    /* Removed fixed height and overflow to prevent scrollbars */
+}
+
+svg {
+    display: block; /* Prevent inline descender space */
 }
 
 /* Visualizer */
