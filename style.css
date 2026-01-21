@@ -315,11 +315,32 @@ svg {
 
 .riddle-content {
     background-color: var(--bg-surface);
-    border-radius: 8px;
-    padding: 1.5rem;
+    border-radius: 12px;
+    padding: 2rem;
     border: 1px solid var(--border-color);
     margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.riddle-section-header {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+}
+
+.riddle-description-text {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text-header);
+    white-space: pre-wrap;
+    font-family: var(--font-family);
+}
+
 
 .riddle-image {
     max-width: 100%;

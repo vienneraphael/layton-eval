@@ -522,23 +522,43 @@ function renderRiddleDetail(riddleId) {
     `;
     container.appendChild(meta);
 
+    // Problem Card (Image + Description)
+    const problemCard = document.createElement('div');
+    problemCard.className = 'riddle-content';
+
+    const problemHeader = document.createElement('h3');
+    problemHeader.textContent = "Problem Statement";
+    problemHeader.className = 'riddle-section-header';
+    problemCard.appendChild(problemHeader);
+
     // Image
     if (riddle.img) {
+        const imgContainer = document.createElement('div');
+        imgContainer.style.textAlign = 'center';
+        imgContainer.style.marginBottom = '1.5rem';
+        imgContainer.style.backgroundColor = 'var(--bg-body)';
+        imgContainer.style.borderRadius = '8px';
+        imgContainer.style.padding = '1rem';
+        imgContainer.style.border = '1px solid var(--border-color)';
+
         const img = document.createElement('img');
-        // Handle base64 or path. Assuming base64 from spec "Lazy-loaded b64 image" 
-        // But jsonl example showed "/9j/..." which is base64 content
-        // It needs prefix
         img.src = `data:image/jpeg;base64,${riddle.img}`;
         img.className = 'riddle-image';
         img.loading = 'lazy';
-        container.appendChild(img);
+        img.style.marginBottom = '0'; // Reset margin
+        img.style.maxHeight = '500px'; // Limit height
+        
+        imgContainer.appendChild(img);
+        problemCard.appendChild(imgContainer);
     }
 
-    // Description
-    const desc = document.createElement('div');
-    desc.className = 'riddle-content';
-    desc.innerHTML = `<p style="white-space: pre-wrap;">${riddle.description}</p>`;
-    container.appendChild(desc);
+    // Description Text
+    const descText = document.createElement('div');
+    descText.className = 'riddle-description-text';
+    descText.textContent = riddle.description;
+    problemCard.appendChild(descText);
+
+    container.appendChild(problemCard);
 
     // Hints
     const hintsSection = document.createElement('div');
