@@ -51,6 +51,8 @@ const elements = {
     rankChart: document.getElementById('rank-chart'),
     riddleGrid: document.getElementById('riddle-grid'),
     riddleSearch: document.getElementById('riddle-search'),
+    categoryFilter: document.getElementById('category-filter'),
+    picaratsFilter: document.getElementById('picarats-filter'),
     modal: document.getElementById('riddle-modal'),
     modalBody: document.getElementById('modal-body'),
     closeModal: document.querySelector('.close-modal')
@@ -76,9 +78,11 @@ function initEventListeners() {
     });
 
     // Riddle Search
-    elements.riddleSearch.addEventListener('input', (e) => {
-        filterRiddleGrid(e.target.value);
-    });
+    elements.riddleSearch.addEventListener('input', () => filterRiddleGrid());
+    
+    // Filters
+    elements.categoryFilter.addEventListener('change', () => filterRiddleGrid());
+    elements.picaratsFilter.addEventListener('change', () => filterRiddleGrid());
 
     // Modal Events
     elements.closeModal.addEventListener('click', closeModal);
@@ -440,6 +444,41 @@ function renderRankChart(data) {
 
 // --- Visualizer Logic ---
 
+function populateFilters(riddles) {
+    const categories = new Set();
+    const picarats = new Set();
+
+    riddles.forEach(r => {
+        if (r.category) categories.add(r.category);
+        if (r.picarats !== undefined && r.picarats !== null) picarats.add(r.picarats);
+    });
+
+    // Populate Category
+    const catSelect = elements.categoryFilter;
+    const currentCat = catSelect.value;
+    catSelect.innerHTML = '<option value="all">All Categories</option>';
+    Array.from(categories).sort().forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+    });
+    if (categories.has(currentCat)) catSelect.value = currentCat;
+
+    // Populate Picarats
+    const picSelect = elements.picaratsFilter;
+    const currentPic = picSelect.value;
+    picSelect.innerHTML = '<option value="all">All Picarats</option>';
+    Array.from(picarats).sort((a, b) => a - b).forEach(pic => {
+        const opt = document.createElement('option');
+        opt.value = pic;
+        // Display '?' for 0 picarats, otherwise the number
+        opt.textContent = pic === 0 ? '?' : pic;
+        picSelect.appendChild(opt);
+    });
+    if (picarats.has(Number(currentPic))) picSelect.value = currentPic;
+}
+
 function populateRiddleList() {
     // Legacy function name kept for compatibility with loadSplit calling onDataLoaded
     // But now it populates the grid
@@ -462,17 +501,39 @@ function populateRiddleList() {
         .filter(r => state.currentSplit === 'full' || r.split === state.currentSplit)
         .sort((a, b) => a.id.localeCompare(b.id));
 
+    populateFilters(riddles);
+
     riddles.forEach(r => {
         const card = createRiddleCard(r);
         grid.appendChild(card);
     });
+    
+    // Apply initial filter in case of reload/split change keeping search
+    filterRiddleGrid();
 }
 
 function createRiddleCard(riddle) {
     const card = document.createElement('div');
     card.className = 'riddle-card';
     card.dataset.id = riddle.id;
-    card.dataset.search = (riddle.id + ' ' + getRiddleTitle(riddle) + ' ' + (riddle.category || '')).toLowerCase();
+    card.dataset.category = riddle.category || 'Unknown';
+    card.dataset.picarats = riddle.picarats !== undefined ? riddle.picarats : 'Unknown';
+
+    // Combine all textual fields for search
+    const searchTerms = [
+        riddle.id,
+        getRiddleTitle(riddle),
+        riddle.category,
+        riddle.description,
+        riddle.first_hint,
+        riddle.second_hint,
+        riddle.third_hint,
+        riddle.special_hint,
+        riddle.solution,
+        riddle.answer
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    card.dataset.search = searchTerms;
     
     card.onclick = () => openModal(riddle.id);
 
@@ -490,9 +551,15 @@ function createRiddleCard(riddle) {
     // Meta
     const meta = document.createElement('div');
     meta.className = 'card-meta';
+    
+    // Format Picarats display
+    const picaratsDisplay = (riddle.picarats === 0 || riddle.picarats === undefined || riddle.picarats === null) 
+        ? '?' 
+        : riddle.picarats;
+
     meta.innerHTML = `
         <span class="badge badge-category">${riddle.category || 'Unknown'}</span>
-        <span class="badge">${riddle.picarats || '?'} Picarats</span>
+        <span class="badge">${picaratsDisplay} Picarats</span>
     `;
     card.appendChild(meta);
 
@@ -515,12 +582,20 @@ function getRiddleTitle(riddle) {
     return title;
 }
 
-function filterRiddleGrid(query) {
+function filterRiddleGrid() {
+    const query = elements.riddleSearch.value.toLowerCase();
+    const catFilter = elements.categoryFilter.value;
+    const picFilter = elements.picaratsFilter.value;
+
     const cards = elements.riddleGrid.getElementsByClassName('riddle-card');
-    query = query.toLowerCase();
+    
     for (let card of cards) {
-        const match = card.dataset.search.includes(query);
-        card.style.display = match ? 'flex' : 'none';
+        const matchesSearch = !query || card.dataset.search.includes(query);
+        const matchesCat = catFilter === 'all' || card.dataset.category === catFilter;
+        // Compare as string since dataset stores strings, but logic is simpler with loose equality or string conv
+        const matchesPic = picFilter === 'all' || card.dataset.picarats == picFilter; 
+        
+        card.style.display = (matchesSearch && matchesCat && matchesPic) ? 'flex' : 'none';
     }
 }
 
@@ -564,10 +639,16 @@ function renderRiddleDetail(riddleId) {
     // Meta
     const meta = document.createElement('div');
     meta.className = 'riddle-meta';
+    
+    // Format Picarats display
+    const picaratsDisplay = (riddle.picarats === 0 || riddle.picarats === undefined || riddle.picarats === null) 
+        ? '?' 
+        : riddle.picarats;
+
     meta.innerHTML = `
         <a href="${riddle.url}" target="_blank" class="btn-wiki">See in Wiki ↗</a>
         <span class="badge badge-category">Category: ${riddle.category || 'Unknown'}</span>
-        <span class="badge">Picarats: ${riddle.picarats || '?'}</span>
+        <span class="badge">Picarats: ${picaratsDisplay}</span>
     `;
     container.appendChild(meta);
 

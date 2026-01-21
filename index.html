@@ -68,7 +68,15 @@
             <section id="visualizer" class="tab-pane">
                 <div class="visualizer-container">
                     <div class="visualizer-header">
-                        <input type="text" id="riddle-search" placeholder="Search ID, Name or Category...">
+                        <div class="filter-controls">
+                            <input type="text" id="riddle-search" placeholder="Search ID, Name, Description, Hints...">
+                            <select id="category-filter">
+                                <option value="all">All Categories</option>
+                            </select>
+                            <select id="picarats-filter">
+                                <option value="all">All Picarats</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="riddle-grid" class="riddle-grid">
                         <!-- Cards populated by JS -->
