@@ -42,11 +42,31 @@ def load_riddle_data() -> dict[str, dict]:
     return riddles
 
 
-def load_predictions(pattern: str) -> list[dict]:
-    """Load all predictions matching the pattern from results folder."""
+def get_split_from_filename(filename: str) -> str:
+    """Extract split (llm/vlm) from filename."""
+    if "_vlm_" in filename:
+        return "vlm"
+    elif "_llm_" in filename:
+        return "llm"
+    return "unknown"
+
+
+def load_predictions(pattern: str, split_filter: str | None = None) -> list[dict]:
+    """Load all predictions matching the pattern from results folder.
+
+    Args:
+        pattern: Glob pattern for result files
+        split_filter: Optional filter for split type ('llm' or 'vlm')
+    """
     predictions = []
 
     for file_path in RESULTS_DIR.glob(pattern):
+        # Skip files that don't match the split filter
+        if split_filter:
+            file_split = get_split_from_filename(file_path.name)
+            if file_split != split_filter:
+                continue
+
         with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 pred = json.loads(line.strip())
@@ -67,6 +87,7 @@ def load_predictions(pattern: str) -> list[dict]:
                     pred["provider"] = "unknown"
 
                 pred["source_file"] = file_path.name
+                pred["split"] = get_split_from_filename(file_path.name)
                 predictions.append(pred)
 
     return predictions
@@ -219,13 +240,44 @@ def select_next_prediction(
     return random.choice(candidate_predictions)
 
 
-def display_riddle_info(riddle: dict) -> None:
-    """Display riddle information in the UI."""
+def display_riddle_info(riddle: dict, show_image: bool = False) -> None:
+    """Display riddle information in the UI.
+
+    Args:
+        riddle: The riddle data dictionary
+        show_image: Whether to display the riddle image (for VLM split)
+    """
     st.markdown("### 📚 Riddle Information")
 
-    col1, col2 = st.columns([2, 1])
+    if show_image:
+        # VLM mode: show image prominently
+        col1, col2 = st.columns([1, 1])
 
-    with col1:
+        with col1:
+            st.markdown(f"**ID:** `{riddle.get('id', 'N/A')}`")
+            st.markdown(f"**Category:** {riddle.get('category', 'N/A')}")
+            st.markdown(f"**Picarats:** {riddle.get('picarats', 'N/A')}")
+
+            url = riddle.get("url", "")
+            if url:
+                st.markdown(f"**URL:** [{url}]({url})")
+
+        with col2:
+            # Display image prominently for VLM
+            img_data = riddle.get("img")
+            if img_data:
+                try:
+                    st.image(
+                        f"data:image/jpeg;base64,{img_data}",
+                        caption="Riddle Image (VLM)",
+                        width="stretch",
+                    )
+                except Exception:
+                    st.warning("Could not display image")
+            else:
+                st.warning("No image available for this riddle")
+    else:
+        # LLM mode: no image
         st.markdown(f"**ID:** `{riddle.get('id', 'N/A')}`")
         st.markdown(f"**Category:** {riddle.get('category', 'N/A')}")
         st.markdown(f"**Picarats:** {riddle.get('picarats', 'N/A')}")
@@ -233,15 +285,6 @@ def display_riddle_info(riddle: dict) -> None:
         url = riddle.get("url", "")
         if url:
             st.markdown(f"**URL:** [{url}]({url})")
-
-    with col2:
-        # Display image if available
-        img_data = riddle.get("img")
-        if img_data:
-            try:
-                st.image(f"data:image/jpeg;base64,{img_data}", caption="Riddle Image", width=200)
-            except Exception:
-                st.warning("Could not display image")
 
     st.markdown("---")
 
@@ -355,14 +398,38 @@ def main():
 
     st.title("🔍 Layton Eval - Human Annotation Interface")
 
+    # Split selector at the top of the interface
+    st.markdown("### Select Annotation Split")
+    split_options = {"LLM (Text Only)": "llm", "VLM (Text + Image)": "vlm"}
+    selected_split_label = st.radio(
+        "Which split are you annotating?",
+        options=list(split_options.keys()),
+        horizontal=True,
+        key="split_selector",
+    )
+    selected_split = split_options[selected_split_label]
+    is_vlm_mode = selected_split == "vlm"
+
+    # Clear current prediction if split changed
+    if "previous_split" not in st.session_state:
+        st.session_state["previous_split"] = selected_split
+    elif st.session_state["previous_split"] != selected_split:
+        st.session_state["previous_split"] = selected_split
+        if "current_prediction" in st.session_state:
+            del st.session_state["current_prediction"]
+        st.rerun()
+
+    st.markdown("---")
+
     # Sidebar for stats and controls
     with st.sidebar:
         st.header("📊 Statistics")
+        st.info(f"**Current Split:** {selected_split.upper()}")
 
         # Load data
         with st.spinner("Loading data..."):
             riddles = load_riddle_data()
-            predictions = load_predictions(args.pattern)
+            predictions = load_predictions(args.pattern, split_filter=selected_split)
             annotations = load_annotations()
             jury_scores = load_jury_scores()
 
@@ -435,8 +502,8 @@ def main():
             st.rerun()
         return
 
-    # Display riddle info
-    display_riddle_info(riddle)
+    # Display riddle info (show image only for VLM split)
+    display_riddle_info(riddle, show_image=is_vlm_mode)
 
     # Display jury disagreement warning if applicable
     jury_scores = st.session_state.get("jury_scores", {})
@@ -496,6 +563,7 @@ def main():
             "model": prediction.get("model", ""),
             "provider": prediction.get("provider", ""),
             "custom_id": prediction.get("custom_id", ""),
+            "split": prediction.get("split", selected_split),
             "is_answer_correct": ans_correct,
             "is_justification_correct": just_correct,
             "notes": notes,
@@ -510,7 +578,7 @@ def main():
             "✅ Both Correct (y)",
             shortcut="y",
             type="primary",
-            use_container_width=True,
+            width="stretch",
         ):
             submit_annotation(True, True)
 
@@ -518,7 +586,7 @@ def main():
         if st.button(
             "❌ Both Wrong (n)",
             shortcut="n",
-            use_container_width=True,
+            width="stretch",
         ):
             submit_annotation(False, False)
 
@@ -526,7 +594,7 @@ def main():
         if st.button(
             "⚠️ Answer Only (a)",
             shortcut="a",
-            use_container_width=True,
+            width="stretch",
         ):
             submit_annotation(True, False)
 
@@ -534,7 +602,7 @@ def main():
         if st.button(
             "⏭️ Skip (s)",
             shortcut="s",
-            use_container_width=True,
+            width="stretch",
         ):
             del st.session_state["current_prediction"]
             st.rerun()
