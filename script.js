@@ -426,14 +426,23 @@ function renderRankChart(data) {
 // --- Visualizer Logic ---
 
 function populateRiddleList() {
-    const riddlesMap = state.cache[state.currentSplit].riddles;
+    const splitData = state.cache[state.currentSplit];
+    const riddlesMap = splitData.riddles;
     if (!riddlesMap) return;
+
+    // Get valid riddle IDs for this split from PPI
+    const validRiddleIds = new Set();
+    if (splitData.ppi) {
+        splitData.ppi.forEach(p => validRiddleIds.add(p.riddle_id));
+    }
 
     const list = elements.riddleList;
     list.innerHTML = '';
 
-    // Convert to array and sort by ID
-    const riddles = Array.from(riddlesMap.values()).sort((a, b) => a.id.localeCompare(b.id));
+    // Convert to array, filter by valid IDs, and sort
+    const riddles = Array.from(riddlesMap.values())
+        .filter(r => validRiddleIds.has(r.id))
+        .sort((a, b) => a.id.localeCompare(b.id));
 
     riddles.forEach(r => {
         const li = document.createElement('li');
