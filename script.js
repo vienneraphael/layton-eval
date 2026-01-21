@@ -492,9 +492,24 @@ function renderRiddleDetail(riddleId) {
 
     // Header
     const h2 = document.createElement('h2');
-    h2.textContent = `Riddle ${riddle.id}`;
-    h2.style.marginBottom = '1rem';
-    h2.style.color = 'var(--text-header)';
+    
+    // Parse title from URL
+    let title = `Riddle ${riddle.id}`;
+    if (riddle.url && riddle.url.includes('Puzzle:')) {
+        try {
+            const parts = riddle.url.split('Puzzle:');
+            if (parts.length > 1) {
+                // Decode and replace underscores
+                title = decodeURIComponent(parts[1]).replace(/_/g, ' ');
+            }
+        } catch (e) {
+            console.warn('Failed to parse title', e);
+        }
+    }
+    
+    h2.textContent = title;
+    // Styles moved to CSS class .riddle-title
+    h2.className = 'riddle-title';
     container.appendChild(h2);
 
     // Meta

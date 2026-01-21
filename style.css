@@ -262,6 +262,13 @@ svg {
     margin: 0 auto;
 }
 
+.riddle-title {
+    margin-bottom: 1rem;
+    color: var(--text-header);
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
 /* Detail View Components */
 .riddle-meta {
     display: flex;
