@@ -70,12 +70,28 @@
                     <div class="visualizer-header">
                         <div class="filter-controls">
                             <input type="text" id="riddle-search" placeholder="Search ID, Name, Description, Hints...">
-                            <select id="category-filter">
-                                <option value="all">All Categories</option>
-                            </select>
-                            <select id="picarats-filter">
-                                <option value="all">All Picarats</option>
-                            </select>
+                            
+                            <!-- Custom Multi-Select for Category -->
+                            <div class="multiselect-container" id="category-filter-container">
+                                <button class="multiselect-trigger" id="category-trigger">
+                                    <span>All Categories</span>
+                                    <span class="arrow">▼</span>
+                                </button>
+                                <div class="multiselect-dropdown" id="category-dropdown">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Custom Multi-Select for Picarats -->
+                            <div class="multiselect-container" id="picarats-filter-container">
+                                <button class="multiselect-trigger" id="picarats-trigger">
+                                    <span>All Picarats</span>
+                                    <span class="arrow">▼</span>
+                                </button>
+                                <div class="multiselect-dropdown" id="picarats-dropdown">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div id="riddle-grid" class="riddle-grid">

@@ -234,18 +234,113 @@ svg {
     transition: border-color 0.2s;
 }
 
-#category-filter, #picarats-filter {
+/* Custom Multi-Select Styles */
+.multiselect-container {
+    position: relative;
+    min-width: 200px;
+}
+
+.multiselect-trigger {
+    width: 100%;
     padding: 0.8rem 1rem;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     color: var(--text-main);
     border-radius: 8px;
     font-size: 1rem;
-    min-width: 150px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: left;
+}
+
+.multiselect-trigger:hover, .multiselect-trigger:focus {
+    border-color: var(--text-muted);
+    outline: none;
+}
+
+.multiselect-trigger.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.multiselect-trigger .arrow {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: 0.5rem;
+}
+
+.multiselect-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 100%; /* At least the width of trigger */
+    width: max-content; /* Allow growing if content is wide */
+    max-width: 300px; /* But cap it */
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.multiselect-dropdown.show {
+    display: block;
+    animation: fadeIn 0.1s ease-out;
+}
+
+.multiselect-option {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: background-color 0.1s;
+    user-select: none;
+    color: var(--text-main);
+}
+
+.multiselect-option:hover {
+    background-color: var(--bg-surface-hover);
+}
+
+.multiselect-option input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 16px;
+    height: 16px;
     cursor: pointer;
 }
 
-#riddle-search:focus, #category-filter:focus, #picarats-filter:focus {
+.multiselect-header {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-surface-hover);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.btn-clear {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+}
+
+.btn-clear:hover {
+    text-decoration: underline;
+}
+
+#riddle-search:focus {
     outline: none;
     border-color: var(--primary);
 }

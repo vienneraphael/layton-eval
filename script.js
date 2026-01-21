@@ -39,8 +39,15 @@ const state = {
         full: {}
     },
     activeTab: 'leaderboard',
-    selectedRiddleId: null
+    selectedRiddleId: null,
+    filters: {
+        categories: new Set(['all']),
+        picarats: new Set(['all'])
+    }
 };
+
+let categorySelect = null;
+let picaratsSelect = null;
 
 // DOM Elements
 const elements = {
@@ -51,8 +58,6 @@ const elements = {
     rankChart: document.getElementById('rank-chart'),
     riddleGrid: document.getElementById('riddle-grid'),
     riddleSearch: document.getElementById('riddle-search'),
-    categoryFilter: document.getElementById('category-filter'),
-    picaratsFilter: document.getElementById('picarats-filter'),
     modal: document.getElementById('riddle-modal'),
     modalBody: document.getElementById('modal-body'),
     closeModal: document.querySelector('.close-modal')
@@ -63,6 +68,170 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     loadSplit('llm'); // Load default
 });
+
+class MultiSelect {
+    constructor(containerId, placeholder, onChange) {
+        this.container = document.getElementById(containerId);
+        this.placeholder = placeholder;
+        this.onChange = onChange;
+        this.selectedValues = new Set(['all']);
+        this.optionsMap = new Map();
+        
+        if (!this.container) return;
+
+        this.trigger = this.container.querySelector('.multiselect-trigger');
+        this.dropdown = this.container.querySelector('.multiselect-dropdown');
+        this.triggerSpan = this.trigger.querySelector('span'); // First span
+
+        this.initEvents();
+    }
+
+    initEvents() {
+        this.trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggle();
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.container.contains(e.target)) {
+                this.close();
+            }
+        });
+    }
+
+    toggle() {
+        // Close others
+        document.querySelectorAll('.multiselect-dropdown').forEach(d => {
+            if (d !== this.dropdown) d.classList.remove('show');
+        });
+        document.querySelectorAll('.multiselect-trigger').forEach(t => {
+            if (t !== this.trigger) t.classList.remove('active');
+        });
+
+        this.dropdown.classList.toggle('show');
+        this.trigger.classList.toggle('active');
+    }
+
+    close() {
+        this.dropdown.classList.remove('show');
+        this.trigger.classList.remove('active');
+    }
+
+    setOptions(options) {
+        this.optionsMap = new Map(options.map(o => [String(o.value), o.label]));
+        this.dropdown.innerHTML = '';
+        
+        // Header with Clear button
+        const header = document.createElement('div');
+        header.className = 'multiselect-header';
+        header.innerHTML = `
+            <span>Select ${this.placeholder}</span>
+            <button class="btn-clear">Clear</button>
+        `;
+        header.querySelector('.btn-clear').onclick = (e) => {
+            e.stopPropagation();
+            this.selectAll();
+        };
+        this.dropdown.appendChild(header);
+
+        // All Option
+        this.addOption('all', `All ${this.placeholder}`);
+
+        // Other Options
+        options.forEach(opt => {
+            this.addOption(opt.value, opt.label);
+        });
+        
+        this.updateTrigger();
+    }
+
+    addOption(value, label) {
+        const div = document.createElement('div');
+        div.className = 'multiselect-option';
+        const strValue = String(value);
+        
+        div.innerHTML = `
+            <input type="checkbox" value="${strValue}" ${this.selectedValues.has(strValue) ? 'checked' : ''}>
+            <span>${label}</span>
+        `;
+        
+        const checkbox = div.querySelector('input');
+        
+        div.onclick = (e) => {
+            e.stopPropagation();
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+                this.handleSelection(strValue, checkbox.checked);
+            }
+        };
+
+        checkbox.onclick = (e) => {
+            e.stopPropagation();
+            this.handleSelection(strValue, checkbox.checked);
+        };
+
+        this.dropdown.appendChild(div);
+    }
+
+    handleSelection(value, isChecked) {
+        if (value === 'all') {
+            if (isChecked) {
+                this.selectAll();
+            } else {
+                // If unchecking all, we should technically check everything else or empty?
+                // Standard behavior: 'All' is a special state.
+                // If user unchecks 'All', effectively nothing is selected -> usually show everything or nothing.
+                // Let's force it to stay checked if it was the only one?
+                // Or let's just re-select it if size is 0.
+                this.selectedValues.clear();
+                this.selectedValues.add('all');
+            }
+        } else {
+            if (isChecked) {
+                this.selectedValues.delete('all');
+                this.selectedValues.add(value);
+            } else {
+                this.selectedValues.delete(value);
+                if (this.selectedValues.size === 0) {
+                    this.selectedValues.add('all');
+                }
+            }
+        }
+        this.renderOptionsState();
+        this.updateTrigger();
+        if (this.onChange) this.onChange(this.selectedValues);
+    }
+
+    selectAll() {
+        this.selectedValues.clear();
+        this.selectedValues.add('all');
+        this.renderOptionsState();
+        this.updateTrigger();
+        if (this.onChange) this.onChange(this.selectedValues);
+    }
+
+    renderOptionsState() {
+        const checkboxes = this.dropdown.querySelectorAll('input');
+        checkboxes.forEach(cb => {
+            cb.checked = this.selectedValues.has(cb.value);
+        });
+    }
+
+    updateTrigger() {
+        if (this.selectedValues.has('all')) {
+            this.triggerSpan.textContent = `All ${this.placeholder}`;
+        } else {
+            const count = this.selectedValues.size;
+            if (count === 1) {
+                const val = Array.from(this.selectedValues)[0];
+                this.triggerSpan.textContent = this.optionsMap.get(val) || val;
+            } else {
+                this.triggerSpan.textContent = `${count} ${this.placeholder}`;
+            }
+        }
+    }
+}
 
 function initEventListeners() {
     // Split Selector
@@ -80,9 +249,16 @@ function initEventListeners() {
     // Riddle Search
     elements.riddleSearch.addEventListener('input', () => filterRiddleGrid());
     
-    // Filters
-    elements.categoryFilter.addEventListener('change', () => filterRiddleGrid());
-    elements.picaratsFilter.addEventListener('change', () => filterRiddleGrid());
+    // Filters - Init MultiSelects
+    categorySelect = new MultiSelect('category-filter-container', 'Categories', (selected) => {
+        state.filters.categories = new Set(selected);
+        filterRiddleGrid();
+    });
+    
+    picaratsSelect = new MultiSelect('picarats-filter-container', 'Picarats', (selected) => {
+        state.filters.picarats = new Set(selected);
+        filterRiddleGrid();
+    });
 
     // Modal Events
     elements.closeModal.addEventListener('click', closeModal);
@@ -454,29 +630,22 @@ function populateFilters(riddles) {
     });
 
     // Populate Category
-    const catSelect = elements.categoryFilter;
-    const currentCat = catSelect.value;
-    catSelect.innerHTML = '<option value="all">All Categories</option>';
-    Array.from(categories).sort().forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        catSelect.appendChild(opt);
-    });
-    if (categories.has(currentCat)) catSelect.value = currentCat;
+    if (categorySelect) {
+        const catOptions = Array.from(categories).sort().map(cat => ({
+            value: cat,
+            label: cat
+        }));
+        categorySelect.setOptions(catOptions);
+    }
 
     // Populate Picarats
-    const picSelect = elements.picaratsFilter;
-    const currentPic = picSelect.value;
-    picSelect.innerHTML = '<option value="all">All Picarats</option>';
-    Array.from(picarats).sort((a, b) => a - b).forEach(pic => {
-        const opt = document.createElement('option');
-        opt.value = pic;
-        // Display '?' for 0 picarats, otherwise the number
-        opt.textContent = pic === 0 ? '?' : pic;
-        picSelect.appendChild(opt);
-    });
-    if (picarats.has(Number(currentPic))) picSelect.value = currentPic;
+    if (picaratsSelect) {
+        const picOptions = Array.from(picarats).sort((a, b) => a - b).map(pic => ({
+            value: pic,
+            label: pic === 0 ? '?' : String(pic)
+        }));
+        picaratsSelect.setOptions(picOptions);
+    }
 }
 
 function populateRiddleList() {
@@ -584,16 +753,19 @@ function getRiddleTitle(riddle) {
 
 function filterRiddleGrid() {
     const query = elements.riddleSearch.value.toLowerCase();
-    const catFilter = elements.categoryFilter.value;
-    const picFilter = elements.picaratsFilter.value;
+    const selectedCats = state.filters.categories;
+    const selectedPics = state.filters.picarats;
 
     const cards = elements.riddleGrid.getElementsByClassName('riddle-card');
     
     for (let card of cards) {
         const matchesSearch = !query || card.dataset.search.includes(query);
-        const matchesCat = catFilter === 'all' || card.dataset.category === catFilter;
-        // Compare as string since dataset stores strings, but logic is simpler with loose equality or string conv
-        const matchesPic = picFilter === 'all' || card.dataset.picarats == picFilter; 
+        
+        const cat = card.dataset.category;
+        const pic = card.dataset.picarats; // String
+        
+        const matchesCat = selectedCats.has('all') || selectedCats.has(cat);
+        const matchesPic = selectedPics.has('all') || selectedPics.has(pic);
         
         card.style.display = (matchesSearch && matchesCat && matchesPic) ? 'flex' : 'none';
     }
