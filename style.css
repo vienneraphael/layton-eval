@@ -268,6 +268,7 @@ svg {
     gap: 1rem;
     margin-bottom: 1rem;
     font-size: 0.9rem;
+    align-items: center;
 }
 
 .badge {
@@ -275,6 +276,34 @@ svg {
     border-radius: 100px;
     background-color: var(--border-color);
     color: var(--text-header);
+    white-space: nowrap;
+}
+
+.badge-category {
+    background-color: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.btn-wiki {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.6rem;
+    background-color: var(--bg-surface-hover);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-wiki:hover {
+    background-color: var(--border-color);
+    color: var(--text-header);
+    border-color: var(--text-muted);
 }
 
 .riddle-content {

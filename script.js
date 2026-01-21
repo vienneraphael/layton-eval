@@ -492,7 +492,7 @@ function renderRiddleDetail(riddleId) {
 
     // Header
     const h2 = document.createElement('h2');
-    h2.textContent = `Riddle ${riddle.id}: ${riddle.category || 'Unknown Category'}`;
+    h2.textContent = `Riddle ${riddle.id}`;
     h2.style.marginBottom = '1rem';
     h2.style.color = 'var(--text-header)';
     container.appendChild(h2);
@@ -501,8 +501,9 @@ function renderRiddleDetail(riddleId) {
     const meta = document.createElement('div');
     meta.className = 'riddle-meta';
     meta.innerHTML = `
+        <a href="${riddle.url}" target="_blank" class="btn-wiki">See in Wiki ↗</a>
+        <span class="badge badge-category">Category: ${riddle.category || 'Unknown'}</span>
         <span class="badge">Picarats: ${riddle.picarats || '?'}</span>
-        <a href="${riddle.url}" target="_blank" style="color: var(--primary); text-decoration: none;">Wiki Link ↗</a>
     `;
     container.appendChild(meta);
 
