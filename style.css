@@ -427,8 +427,100 @@ svg {
     font-size: 1.15rem;
     line-height: 1.8;
     color: var(--text-header);
-    white-space: pre-wrap;
+    /* white-space: pre-wrap;  Removed because markdown handles wrapping */
     font-family: var(--font-family);
+}
+
+.markdown-content {
+    line-height: 1.6;
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.markdown-content p {
+    margin-bottom: 1em;
+}
+
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3, 
+.markdown-content h4, 
+.markdown-content h5, 
+.markdown-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: var(--text-header);
+    font-weight: 600;
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+}
+
+.markdown-content li {
+    margin-bottom: 0.25em;
+}
+
+.markdown-content code {
+    background-color: rgba(110, 118, 129, 0.4);
+    padding: 0.2em 0.4em;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 85%;
+}
+
+.markdown-content pre {
+    background-color: #161b22;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+    border: 1px solid var(--border-color);
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+    font-size: 100%;
+    color: var(--text-main);
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid var(--border-color);
+    padding-left: 1em;
+    color: var(--text-muted);
+    margin-bottom: 1em;
+}
+
+.solution-section {
+    margin-bottom: 2rem;
+    background-color: rgba(35, 134, 54, 0.1); /* Slight green tint */
+    border: 1px solid rgba(35, 134, 54, 0.3);
+}
+
+.solution-header {
+    color: var(--accent-green);
+    border-bottom-color: rgba(35, 134, 54, 0.3);
+}
+
+.ground-truth-box {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.ground-truth-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    display: block;
+    font-weight: 600;
 }
 
 

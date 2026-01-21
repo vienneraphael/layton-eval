@@ -681,13 +681,57 @@ function renderRiddleDetail(riddleId) {
         problemCard.appendChild(imgContainer);
     }
 
-    // Description Text
+    // Description Text (Markdown)
     const descText = document.createElement('div');
-    descText.className = 'riddle-description-text';
-    descText.textContent = riddle.description;
+    descText.className = 'riddle-description-text markdown-content';
+    descText.innerHTML = marked.parse(riddle.description || '');
     problemCard.appendChild(descText);
 
     container.appendChild(problemCard);
+
+    // --- Solution & Ground Truth Section ---
+    const solutionCard = document.createElement('div');
+    solutionCard.className = 'riddle-content solution-section';
+
+    const solutionHeader = document.createElement('h3');
+    solutionHeader.textContent = "Solution & Ground Truth";
+    solutionHeader.className = 'riddle-section-header solution-header';
+    solutionCard.appendChild(solutionHeader);
+
+    // Ground Truth Answer
+    const gtBox = document.createElement('div');
+    gtBox.className = 'ground-truth-box';
+    gtBox.innerHTML = `
+        <span class="ground-truth-label">Ground Truth Answer</span>
+        <div class="markdown-content">${marked.parse(riddle.answer || '')}</div>
+    `;
+    solutionCard.appendChild(gtBox);
+
+    // Solution Text (Official)
+    if (riddle.solution) {
+        const solDiv = document.createElement('div');
+        solDiv.style.marginBottom = '1.5rem';
+        solDiv.innerHTML = `
+            <span class="ground-truth-label">Official Solution</span>
+            <div class="markdown-content">${marked.parse(riddle.solution)}</div>
+        `;
+        solutionCard.appendChild(solDiv);
+    }
+
+    // Proposed Justification
+    if (riddle.justification) {
+        const justDiv = document.createElement('details');
+        justDiv.innerHTML = `
+            <summary style="cursor:pointer; color:var(--text-muted); font-weight:500;">Show Proposed Justification (Generated)</summary>
+            <div style="margin-top:1rem; padding-left:1rem; border-left:2px solid var(--accent-green);" class="markdown-content">
+                ${marked.parse(riddle.justification)}
+            </div>
+        `;
+        solutionCard.appendChild(justDiv);
+    }
+
+    container.appendChild(solutionCard);
+
 
     // Hints
     const hintsSection = document.createElement('div');
@@ -718,8 +762,8 @@ function renderRiddleDetail(riddleId) {
             // Pane
             const pane = document.createElement('div');
             pane.id = `pane-${h.id}`; // Unique ID within modal
-            pane.className = `hint-tab-pane ${index === 0 ? 'active' : ''}`;
-            pane.textContent = h.text;
+            pane.className = `hint-tab-pane markdown-content ${index === 0 ? 'active' : ''}`;
+            pane.innerHTML = marked.parse(h.text || ''); // Render hints as markdown too
             contentContainer.appendChild(pane);
 
             // Click Handler
@@ -769,7 +813,11 @@ function renderRiddleDetail(riddleId) {
             // Answer
             const ansDiv = document.createElement('div');
             ansDiv.style.marginBottom = '1rem';
-            ansDiv.innerHTML = `<strong>Answer:</strong> ${pred.answer}`;
+            // ansDiv.innerHTML = `<strong>Answer:</strong> ${pred.answer}`; // OLD
+            ansDiv.innerHTML = `
+                <strong style="display:block; margin-bottom:0.25rem; color:var(--text-muted);">Answer:</strong>
+                <div class="markdown-content">${marked.parse(pred.answer || '')}</div>
+            `;
             card.appendChild(ansDiv);
 
             // Justification
@@ -778,7 +826,9 @@ function renderRiddleDetail(riddleId) {
                 justDiv.style.marginBottom = '1rem';
                 justDiv.innerHTML = `
                     <summary style="cursor:pointer; color:var(--text-muted)">Show Justification</summary>
-                    <p style="margin-top:0.5rem; white-space: pre-wrap; font-size: 0.9em; color: var(--text-main)">${pred.justification}</p>
+                    <div style="margin-top:0.5rem; color: var(--text-main)" class="markdown-content">
+                        ${marked.parse(pred.justification || '')}
+                    </div>
                 `;
                 card.appendChild(justDiv);
             }
