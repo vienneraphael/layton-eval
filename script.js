@@ -547,7 +547,6 @@ function renderRiddleDetail(riddleId) {
         img.className = 'riddle-image';
         img.loading = 'lazy';
         img.style.marginBottom = '0'; // Reset margin
-        img.style.maxHeight = '500px'; // Limit height
         
         imgContainer.appendChild(img);
         problemCard.appendChild(imgContainer);
