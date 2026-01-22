@@ -424,16 +424,17 @@ function renderRankChart(data) {
     const container = elements.rankChart;
     container.innerHTML = '';
 
-    const width = container.clientWidth || 800;
-    const height = 600; // Increased height
-    const padding = { top: 50, right: 30, bottom: 200, left: 60 }; // Increased bottom padding
+    const width = Math.max(600, container.clientWidth || 800);
+    const modelHeight = 30; // pixels per model
+    const height = Math.max(400, data.length * modelHeight + 150); // Dynamic height
+    const padding = { top: 40, right: 60, bottom: 60, left: 200 }; // Increased left padding for model names
     
     // Detect Score Range (0-1 or 0-100)
     let maxScore = 100;
     const allScoresSmall = data.every(d => d.score <= 1);
     if (allScoresSmall) maxScore = 1;
 
-    // Calculate dynamic Y-axis range (Scores)
+    // Calculate dynamic Score range
     let minDataScore = maxScore;
     let maxDataScore = 0;
     
@@ -445,7 +446,7 @@ function renderRankChart(data) {
         if (high > maxDataScore) maxDataScore = high;
     });
 
-    const paddingVal = allScoresSmall ? 0.05 : 5;
+    const paddingVal = allScoresSmall ? 0.01 : 1;
     let axisMin = Math.max(0, minDataScore - paddingVal);
     let axisMax = Math.min(maxScore, maxDataScore + paddingVal);
 
@@ -463,49 +464,24 @@ function renderRankChart(data) {
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
     
-    // Y Scale function (Score)
-    const yScale = (score) => {
-        // Inverted: Max score at top (padding.top), Min score at bottom
-        return padding.top + chartHeight - ((score - axisMin) / (axisMax - axisMin)) * chartHeight;
+    // X Scale function (Score)
+    const xScale = (score) => {
+        return padding.left + ((score - axisMin) / (axisMax - axisMin)) * chartWidth;
     };
 
-    // X Scale function (Model Index)
-    const xScale = (index) => {
-        const step = chartWidth / data.length;
-        return padding.left + step * index + step / 2;
+    // Y Scale function (Model Index)
+    const yScale = (index) => {
+        const step = chartHeight / data.length;
+        return padding.top + step * index + step / 2;
     };
 
-    // Draw Grid Lines (Horizontal)
+    // Draw Grid Lines (Vertical - Score Ticks)
     const tickCount = 10;
     for (let i = 0; i <= tickCount; i++) {
         const val = axisMin + (i / tickCount) * (axisMax - axisMin);
-        const y = yScale(val);
+        const x = xScale(val);
         
         // Grid Line
-        const gridLine = document.createElementNS(svgNS, "line");
-        gridLine.setAttribute("x1", padding.left);
-        gridLine.setAttribute("y1", y);
-        gridLine.setAttribute("x2", width - padding.right);
-        gridLine.setAttribute("y2", y);
-        gridLine.setAttribute("stroke", "var(--border-color)");
-        gridLine.setAttribute("stroke-opacity", "0.3");
-        svg.appendChild(gridLine);
-
-        // Label
-        const text = document.createElementNS(svgNS, "text");
-        text.setAttribute("x", padding.left - 10);
-        text.setAttribute("y", y + 4);
-        text.setAttribute("text-anchor", "end");
-        text.setAttribute("fill", "var(--text-muted)");
-        text.setAttribute("font-size", "10px");
-        text.textContent = val.toFixed(allScoresSmall ? 2 : 0);
-        svg.appendChild(text);
-    }
-
-    // Draw Grid Lines (Vertical) - Model Ticks
-    data.forEach((_, index) => {
-        const x = xScale(index);
-        
         const gridLine = document.createElementNS(svgNS, "line");
         gridLine.setAttribute("x1", x);
         gridLine.setAttribute("y1", padding.top);
@@ -514,18 +490,47 @@ function renderRankChart(data) {
         gridLine.setAttribute("stroke", "var(--border-color)");
         gridLine.setAttribute("stroke-opacity", "0.3");
         svg.appendChild(gridLine);
+
+        // Label (Bottom)
+        const text = document.createElementNS(svgNS, "text");
+        text.setAttribute("x", x);
+        text.setAttribute("y", height - padding.bottom + 20);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("fill", "var(--text-muted)");
+        text.setAttribute("font-size", "11px");
+        text.textContent = val.toFixed(allScoresSmall ? 2 : 0);
+        svg.appendChild(text);
+
+        // Label (Top - optional)
+        const textTop = text.cloneNode(true);
+        textTop.setAttribute("y", padding.top - 10);
+        svg.appendChild(textTop);
+    }
+
+    // Draw Grid Lines (Horizontal) - Model Ticks
+    data.forEach((_, index) => {
+        const y = yScale(index);
+        
+        const gridLine = document.createElementNS(svgNS, "line");
+        gridLine.setAttribute("x1", padding.left);
+        gridLine.setAttribute("y1", y);
+        gridLine.setAttribute("x2", width - padding.right);
+        gridLine.setAttribute("y2", y);
+        gridLine.setAttribute("stroke", "var(--border-color)");
+        gridLine.setAttribute("stroke-opacity", "0.2");
+        svg.appendChild(gridLine);
     });
 
     // Draw Data Points
     data.forEach((row, index) => {
-        const x = xScale(index);
+        const y = yScale(index);
         const score = row.score;
         const ci = row['95% CI (±)'];
         const color = PROVIDER_COLORS[row.provider] || PROVIDER_COLORS['default'];
 
-        const yScore = yScale(score);
-        const yHigh = yScale(score + ci); // Higher score -> Smaller Y
-        const yLow = yScale(score - ci);  // Lower score -> Larger Y
+        const xScore = xScale(score);
+        const xLow = xScale(score - ci);
+        const xHigh = xScale(score + ci);
 
         const g = document.createElementNS(svgNS, "g");
 
@@ -540,74 +545,67 @@ function renderRankChart(data) {
             }
         }
 
-        // Vertical CI Line
+        // Horizontal CI Line
         const line = document.createElementNS(svgNS, "line");
-        line.setAttribute("x1", x);
-        line.setAttribute("y1", yLow);
-        line.setAttribute("x2", x);
-        line.setAttribute("y2", yHigh);
+        line.setAttribute("x1", xLow);
+        line.setAttribute("y1", y);
+        line.setAttribute("x2", xHigh);
+        line.setAttribute("y2", y);
         line.setAttribute("stroke", color);
         line.setAttribute("stroke-width", "2");
         line.setAttribute("opacity", "0.6");
         g.appendChild(line);
 
         // Caps
-        const capWidth = 10;
+        const capHeight = 10;
         
-        // Top Cap (Higher Score)
+        // Left Cap
         const cap1 = document.createElementNS(svgNS, "line");
-        cap1.setAttribute("x1", x - capWidth/2);
-        cap1.setAttribute("y1", yHigh);
-        cap1.setAttribute("x2", x + capWidth/2);
-        cap1.setAttribute("y2", yHigh);
+        cap1.setAttribute("x1", xLow);
+        cap1.setAttribute("y1", y - capHeight/2);
+        cap1.setAttribute("x2", xLow);
+        cap1.setAttribute("y2", y + capHeight/2);
         cap1.setAttribute("stroke", color);
         cap1.setAttribute("stroke-width", "2");
         g.appendChild(cap1);
 
-        // Bottom Cap (Lower Score)
+        // Right Cap
         const cap2 = document.createElementNS(svgNS, "line");
-        cap2.setAttribute("x1", x - capWidth/2);
-        cap2.setAttribute("y1", yLow);
-        cap2.setAttribute("x2", x + capWidth/2);
-        cap2.setAttribute("y2", yLow);
+        cap2.setAttribute("x1", xHigh);
+        cap2.setAttribute("y1", y - capHeight/2);
+        cap2.setAttribute("x2", xHigh);
+        cap2.setAttribute("y2", y + capHeight/2);
         cap2.setAttribute("stroke", color);
         cap2.setAttribute("stroke-width", "2");
         g.appendChild(cap2);
 
         // Score Point
         const circle = document.createElementNS(svgNS, "circle");
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", yScore);
+        circle.setAttribute("cx", xScore);
+        circle.setAttribute("cy", y);
         circle.setAttribute("r", "4");
-        circle.setAttribute("fill", "var(--bg-surface)"); // Use theme var
+        circle.setAttribute("fill", "var(--bg-surface)");
         circle.setAttribute("stroke", color);
         circle.setAttribute("stroke-width", "2");
         g.appendChild(circle);
 
-        // Rank Spread Label (Above Top Cap)
+        // Rank Spread Label (Above the line)
         const spreadLabel = document.createElementNS(svgNS, "text");
-        spreadLabel.setAttribute("x", x);
-        spreadLabel.setAttribute("y", yHigh - 8);
-        spreadLabel.setAttribute("text-anchor", "middle");
+        spreadLabel.setAttribute("x", xHigh + 10);
+        spreadLabel.setAttribute("y", y + 4);
+        spreadLabel.setAttribute("text-anchor", "start");
         spreadLabel.setAttribute("fill", "var(--text-muted)");
         spreadLabel.setAttribute("font-size", "10px");
-        spreadLabel.textContent = rankSpreadText;
+        spreadLabel.textContent = `[${rankSpreadText}]`;
         g.appendChild(spreadLabel);
 
-        // Model Name Label (Rotated on X-Axis)
-        const labelY = height - padding.bottom + 15;
+        // Model Name Label (Horizontal on Y-Axis)
         const nameLabel = document.createElementNS(svgNS, "text");
-        nameLabel.setAttribute("x", x);
-        nameLabel.setAttribute("y", labelY);
-        nameLabel.setAttribute("text-anchor", "end"); // Anchor end for 45 deg rotation to align well?
-        // Actually for -45 or -90, end anchor works best if we position at the tick mark
-        // Let's use 45 degrees, which usually goes down-right.
-        // If we want it like the screenshot (vertical or angled), let's try 45.
-        // Rotated 45 degrees around (x, labelY)
-        nameLabel.setAttribute("transform", `rotate(45, ${x}, ${labelY})`);
-        nameLabel.setAttribute("text-anchor", "start"); // Start of text at the tick
-        nameLabel.setAttribute("fill", color); // Use provider color
-        nameLabel.setAttribute("font-size", "11px");
+        nameLabel.setAttribute("x", padding.left - 15);
+        nameLabel.setAttribute("y", y + 4);
+        nameLabel.setAttribute("text-anchor", "end");
+        nameLabel.setAttribute("fill", color);
+        nameLabel.setAttribute("font-size", "12px");
         nameLabel.setAttribute("font-weight", "500");
         nameLabel.textContent = row.model;
         g.appendChild(nameLabel);
