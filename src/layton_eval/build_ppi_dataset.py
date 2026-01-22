@@ -2,8 +2,8 @@ import polars as pl
 import glob
 from layton_eval.settings import settings
 
-def get_predictions_df():
-    return pl.read_ndjson(glob.glob("results/benchmark_*.jsonl"), include_file_paths="source_file")["custom_id", "answer", "source_file"].with_columns(
+def get_predictions_df(split: str):
+    return pl.read_ndjson(glob.glob("results/benchmark_*_llm_*.jsonl"), include_file_paths="source_file")["custom_id", "answer", "source_file"].with_columns(
         pl.col("answer").str.json_decode(dtype=pl.Struct(fields={"answer": pl.String, "justification": pl.String})).struct.unnest(),
         (
             pl.col("source_file").str.split("_").list.get(2) +
@@ -39,7 +39,8 @@ def main(prefixes: list[str]):
         values=["is_answer_correct", "is_justification_correct", "both_correct"],
     )
     df_human = get_human_annotations_df()
-    df_predictions = get_predictions_df()
+    split = "llm" if "llm" in prefixes[0] else "vlm"
+    df_predictions = get_predictions_df(split=split)
     df_predictions.join(df_judge, left_on=["riddle_id", "model"], right_on=["riddle_id", "judged_model"], how="left").join(
     df_human, on=["riddle_id", "model"], how="left"
     ).select(
