@@ -23,6 +23,14 @@ const PROVIDER_COLORS = {
     'default': '#6b7280'
 };
 
+const JUDGE_DISPLAY_NAMES = {
+    'openai': 'OpenAI Judge',
+    'anthropic': 'Anthropic Judge',
+    'gemini': 'Gemini Judge',
+    'google': 'Gemini Judge',
+    'mistral': 'Mistral Judge'
+};
+
 // State
 const state = {
     currentSplit: 'llm',
@@ -1176,19 +1184,16 @@ function renderRiddleDetail(riddleId) {
         thModel.textContent = 'Model';
         headerRow.appendChild(thModel);
         
-        const thOverall = document.createElement('th');
-        thOverall.textContent = 'Overall';
-        headerRow.appendChild(thOverall);
-        
         // Up to 4 judges as per TODO, but let's be flexible while following the requirement
         sortedJudges.forEach((j, i) => {
             const th = document.createElement('th');
-            // Show shortened judge name or J1, J2...
-            th.textContent = `J${i+1}`;
+            const provider = getProviderFromModelName(j, splitData.modelProviders);
+            
+            // Show shortened judge name or fallback to J1, J2...
+            th.textContent = JUDGE_DISPLAY_NAMES[provider] || `J${i+1}`;
             th.title = j; // Full name on hover
             
             // Color based on provider
-            const provider = getProviderFromModelName(j, splitData.modelProviders);
             th.style.color = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
             th.style.fontWeight = '700';
             
@@ -1220,43 +1225,18 @@ function renderRiddleDetail(riddleId) {
             tdModel.style.color = PROVIDER_COLORS[pred.provider] || 'inherit';
             tr.appendChild(tdModel);
             
-            // Overall
-            const tdOverall = document.createElement('td');
-            let overallScore = 0;
-            let valid = false;
-            if (pred.human_both_correct !== null && pred.human_both_correct !== undefined) {
-                overallScore = pred.human_both_correct ? 1 : 0;
-                valid = true;
-            } else {
-                let sum = 0;
-                let count = 0;
-                sortedJudges.forEach(j => {
-                    const val = pred[`both_correct_${j}`];
-                    if (val !== null && val !== undefined) {
-                        sum += val ? 1 : 0;
-                        count++;
-                    }
-                });
-                if (count > 0) {
-                    overallScore = sum / count;
-                    valid = true;
-                }
-            }
-            tdOverall.innerHTML = valid ? renderCheckCross(overallScore >= 0.5) : '';
-            tr.appendChild(tdOverall);
-            
             // Judges
             sortedJudges.forEach(j => {
                 const td = document.createElement('td');
                 const val = pred[`both_correct_${j}`];
-                td.innerHTML = val !== null && val !== undefined ? renderCheckCross(val) : '';
+                td.innerHTML = renderCheckCross(val);
                 tr.appendChild(td);
             });
             
             // Human
             const tdHuman = document.createElement('td');
             const hVal = pred.human_both_correct;
-            tdHuman.innerHTML = hVal !== null && hVal !== undefined ? renderCheckCross(hVal) : '';
+            tdHuman.innerHTML = renderCheckCross(hVal);
             tr.appendChild(tdHuman);
             
             tbody.appendChild(tr);
@@ -1374,5 +1354,5 @@ function renderStatus(val) {
 function renderCheckCross(val) {
     if (val === true) return '<span class="status-icon status-check" style="color:#3fb950 !important; font-weight:bold;">✓</span>';
     if (val === false) return '<span class="status-icon status-cross" style="color:#f85149 !important; font-weight:bold;">✗</span>';
-    return '<span class="status-icon status-empty">-</span>';
+    return '<span class="status-icon status-empty">—</span>';
 }
