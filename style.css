@@ -686,12 +686,6 @@ svg {
     animation: fadeIn 0.2s;
 }
 
-.judge-scorecard {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-}
-
 /* Recap Table Styles */
 .recap-table-container {
     margin-bottom: 2rem;
@@ -779,28 +773,6 @@ span.status-incorrect {
 
 .recap-table tr:hover {
     background-color: rgba(255,255,255,0.02);
-}
-
-.judge-card {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 1rem;
-}
-
-.judge-card h4 {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.status-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
 }
 
 /* Model Search Select */
@@ -892,6 +864,53 @@ span.status-incorrect {
     color: var(--text-muted);
     font-weight: normal;
     font-size: 0.85rem;
+}
+
+.judge-table-container {
+    margin-top: 1.5rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.judge-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.judge-table th, .judge-table td {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.judge-table th {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+}
+
+.judge-table td:first-child, .judge-table th:first-child {
+    text-align: left;
+    padding-left: 1.25rem;
+}
+
+.judge-table tr:last-child td {
+    border-bottom: none;
+}
+
+.judge-name-cell {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.judge-table tr:hover {
+    background-color: rgba(255,255,255,0.02);
 }
 
 /* Success Rate Badge Colors */

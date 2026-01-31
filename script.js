@@ -1480,69 +1480,70 @@ function renderPredictionCard(pred, splitData) {
 
     // Justification
     if (pred.justification) {
-        const justDiv = document.createElement('details');
+        const justDiv = document.createElement('div');
         justDiv.style.marginBottom = '1rem';
         justDiv.innerHTML = `
-            <summary style="cursor:pointer; color:var(--text-muted)">Show Justification</summary>
-            <div style="margin-top:0.5rem; color: var(--text-main)" class="markdown-content">
+            <strong style="display:block; margin-bottom:0.25rem; color:var(--text-muted);">Justification:</strong>
+            <div class="markdown-content">
                 ${marked.parse(pred.justification || '')}
             </div>
         `;
         card.appendChild(justDiv);
     }
 
-    // Judges
-    const scorecard = document.createElement('div');
-    scorecard.className = 'judge-scorecard';
+    // Judges Table
+    const tableContainer = document.createElement('div');
+    tableContainer.className = 'judge-table-container';
     
-    // Also Human
+    const table = document.createElement('table');
+    table.className = 'judge-table';
+    
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+        <tr>
+            <th>Judge</th>
+            <th>Judge Output</th>
+        </tr>
+    `;
+    table.appendChild(thead);
+    
+    const tbody = document.createElement('tbody');
+    
+    const addRow = (name, ans, just, both, provider) => {
+        const tr = document.createElement('tr');
+        const tdName = document.createElement('td');
+        tdName.className = 'judge-name-cell';
+        tdName.textContent = name;
+        tdName.style.color = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
+        tr.appendChild(tdName);
+        
+        const td = document.createElement('td');
+        td.innerHTML = renderCheckCross(both);
+        tr.appendChild(td);
+        
+        tbody.appendChild(tr);
+    };
+
+    // Human Judge
     if (pred.human_both_correct !== null) {
-        scorecard.appendChild(createJudgeCard('Human', pred.human_answer_correct, pred.human_justification_correct, pred.human_both_correct));
+        addRow('Human', pred.human_answer_correct, pred.human_justification_correct, pred.human_both_correct, 'default');
     }
 
-    // Regex to find judge names from keys
+    // Automated Judges
     const judgeKeys = Object.keys(pred).filter(k => k.startsWith('both_correct_'));
-
     judgeKeys.forEach(key => {
         const judgeName = key.replace('both_correct_', '');
-        // Check if this judge is active (non-null)
         if (pred[key] !== null) {
-            const ansKey = `is_answer_correct_${judgeName}`;
-            const justKey = `is_justification_correct_${judgeName}`;
-            scorecard.appendChild(createJudgeCard(judgeName, pred[ansKey], pred[justKey], pred[key]));
+            const provider = getProviderFromModelName(judgeName, splitData.modelProviders);
+            addRow(judgeName, pred[`is_answer_correct_${judgeName}`], pred[`is_justification_correct_${judgeName}`], pred[key], provider);
         }
     });
 
-    card.appendChild(scorecard);
-    return card;
-}
+    table.appendChild(tbody);
+    tableContainer.appendChild(table);
+    card.appendChild(tableContainer);
 
-function createJudgeCard(name, ans, just, both) {
-    const card = document.createElement('div');
-    card.className = 'judge-card';
-    
-    card.innerHTML = `
-        <h4>${name}</h4>
-        <div class="status-row">
-            <span>Answer:</span>
-            ${renderStatus(ans)}
-        </div>
-        <div class="status-row">
-            <span>Justification:</span>
-            ${renderStatus(just)}
-        </div>
-        <div class="status-row" style="border-top:1px solid var(--border-color); padding-top:0.5rem; margin-top:0.5rem">
-            <span>Overall:</span>
-            ${renderStatus(both)}
-        </div>
-    `;
     return card;
-}
-
-function renderStatus(val) {
-    if (val === true) return '<span class="status-correct" style="color:#3fb950 !important; font-weight:bold;">✓ Correct</span>';
-    if (val === false) return '<span class="status-incorrect" style="color:#f85149 !important; font-weight:bold;">✗ Incorrect</span>';
-    return '<span class="status-null">N/A</span>';
 }
 
 function renderCheckCross(val) {
