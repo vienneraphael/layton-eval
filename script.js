@@ -31,6 +31,32 @@ const JUDGE_DISPLAY_NAMES = {
     'mistral': 'Mistral Judge'
 };
 
+const CATEGORY_DEFINITIONS = {
+    'Arrange Parts': `In the Arrange Parts puzzles, the player has to move specific parts horizontally and/or vertically to place them in the correct spots. In the benchmark, models have to come up with a clear description of their arrangement.`,
+    'Button': `In the Button puzzles, you have to tap the correct button to submit your answer. Those are basically multi-choice questions. Random positive answers are kept safe through the justification check.`,
+    'Circle': `The Circle Puzzles require you to draw a circle around the correct answer. In the benchmark that means the model has to semantically or spatially describe something in an image precisely.`,
+    'Circle Answer': `In the Circle Answer Puzzles, you are provided with a picture in which you must draw a circle around the correct answer. In the benchmark that means the model has to semantically or spatially describe something in an image precisely.`,
+    'Input': `In the Input Puzzles, you get one or more input boxes, where you can write your answer. These puzzles usually make you think and calculate to get the answer.`,
+    'Line': `Line puzzles require players to imagine a line or path mentally.`,
+    'Logical': `Nothing special about that category, bare reasoning.`,
+    'Mark Answer': `Puzzles in which you must mark your answer(s). In the benchmark that means the model has to semantically or spatially describe something in an image precisely.`,
+    'Matchstick': `In the Matchstick Puzzles, you need to move one or more matches to the correct position in a certain amount of moves. They can be rotated and moved. Moving and rotating the same match only counts for 1 move. It requires visualizing the outcome of an action on a physical structure.`,
+    'Move': `All puzzles in which you move stuff. Plain and simple. Since models cannot move anything, those are tied back to choosing an option or outputting plain text.`,
+    'Multiple Choice': `These are the Puzzles where you have to select one of the possible choices by tapping it. Random positive answers are kept safe through the justification check.`,
+    'Pin Board': `Pin Board Puzzles present you with a wooden board with various pins on it. You have to connect the correct pins (with your stylus) to solve these Puzzles. In the benchmark, those riddles require models to output the maximum number of shapes meeting specific constraints that can be drawn on the pinboard.`,
+    'Press Button': `In the Press Button Puzzles, you are provided with a picture in which you must press a button to choose your answer. This is a multi-choice answer. Random positive answers are kept safe through the justification check.`,
+    'River': `Puzzles involving a river where several entities must cross it, with constraints to respect. Models have to plan and come up with an optimal strategy, while verifying that they don't break rules on each move.`,
+    'Rotate and Arrange': `A category for puzzles involving Rotating and Arranging. In the benchmark, those riddles require spatial reasoning and 3D visualization, like visualizing how faces of a dice would render when built up from a 2D plan.`,
+    'Search': `Puzzles in which you search the picture for your answer. Requires precise description of visual elements.`,
+    'Select': `In the select puzzles, you must select an option and submit it as your answer. This often implies selecting multiple objects, by a number or label, sometimes in the right order.`,
+    'Select and Submit': `Puzzles in which you select your chosen answer, then tap the submit button. This often implies selecting multiple answers in a list, or semantically/spatially describing objects.`,
+    'Selection': `Selection puzzles are puzzles in which the player must tap and select one of many choices to find the answer of the puzzle. These are similar to Multiple Choice-esque puzzles from the previous Professor Layton games. In the benchmark, models have to come up with a visual description of the object they want to select.`,
+    'Strategy': `Strategy puzzles, as the name suggests, deal with using tactical thinking to solve the puzzle.`,
+    'Tap Answer': `All puzzles that are solved by tapping the correct answer. All of which being multiple choice. Random positive answers are kept safe through the justification check.`,
+    'Touch': `In the touch puzzles, the player must select an option and submit it as your answer. In the benchmark, models must semantically or spatially describe the object instead of touching it.`,
+    'Write Answer': `In the Write Answer Puzzles, you need to write your answer in the provided boxes. Free-text answer.`
+};
+
 // State
 const state = {
     currentSplit: 'llm',
@@ -1084,6 +1110,31 @@ function renderAnalytics() {
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("dominant-baseline", "middle");
         text.setAttribute("class", "radar-label");
+        text.style.cursor = 'help';
+
+        const definition = CATEGORY_DEFINITIONS[cat];
+        if (definition) {
+            text.addEventListener('mouseenter', (e) => {
+                let tooltip = document.getElementById('radar-category-tooltip');
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.id = 'radar-category-tooltip';
+                    tooltip.className = 'axis-info-tooltip';
+                    document.body.appendChild(tooltip);
+                }
+                tooltip.textContent = definition;
+                const rect = text.getBoundingClientRect();
+                tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+                tooltip.style.top = (rect.top - 10) + 'px';
+                tooltip.style.display = 'block';
+                text.style.fill = 'var(--primary)';
+            });
+            text.addEventListener('mouseleave', () => {
+                const tooltip = document.getElementById('radar-category-tooltip');
+                if (tooltip) tooltip.style.display = 'none';
+                text.style.fill = 'var(--text-header)';
+            });
+        }
 
         // Center vertically based on number of lines
         const lineHeight = 22; 
