@@ -188,7 +188,7 @@ tbody tr:hover {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1.5rem;
-    overflow-x: auto;
+    overflow: visible;
 }
 
 .chart-container h3 {
@@ -826,6 +826,111 @@ span.status-incorrect {
     background-color: rgba(218, 54, 51, 0.15);
     color: #fca5a5;
     border-color: rgba(218, 54, 51, 0.3);
+}
+
+/* Info Icon Tooltip */
+.info-wrapper {
+    position: relative;
+    display: inline-block;
+    vertical-align: super;
+    margin-left: 0.4rem;
+    z-index: 50;
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #4b5563;
+    color: #e5e7eb;
+    font-size: 10px;
+    font-weight: 700;
+    font-style: italic;
+    font-family: serif;
+    cursor: help;
+    border: 1px solid #6b7280;
+    padding: 0;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.info-icon:hover,
+.info-icon:focus {
+    background-color: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+    outline: none;
+}
+
+.info-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    padding: 0.75rem 1rem;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    color: #c9d1d9;
+    font-size: 0.85rem;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1.5;
+    text-align: left;
+    white-space: normal;
+    z-index: 9999;
+}
+
+.info-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #161b22 transparent transparent transparent;
+}
+
+.info-wrapper:hover .info-tooltip,
+.info-wrapper:focus-within .info-tooltip {
+    display: block !important;
+}
+
+/* SVG Axis Info Tooltip */
+.axis-info-tooltip {
+    display: none;
+    position: fixed;
+    transform: translateX(-50%) translateY(-100%);
+    width: 280px;
+    padding: 0.6rem 0.8rem;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    color: #c9d1d9;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.4;
+    text-align: left;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.axis-info-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #161b22 transparent transparent transparent;
 }
 
 /* Mobile Styles */

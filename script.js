@@ -563,17 +563,6 @@ function renderRankChart(data) {
 
         const g = document.createElementNS(svgNS, "g");
 
-        // Rank Spread Text
-        let rankSpreadText = row.rank_spread;
-        const spreadParts = row.rank_spread.split('<-->').map(s => s.trim());
-        if (spreadParts.length === 2) {
-            if (spreadParts[0] === spreadParts[1]) {
-                rankSpreadText = spreadParts[0];
-            } else {
-                rankSpreadText = `${spreadParts[0]}-${spreadParts[1]}`;
-            }
-        }
-
         // Horizontal CI Line
         const line = document.createElementNS(svgNS, "line");
         line.setAttribute("x1", xLow);
@@ -618,16 +607,6 @@ function renderRankChart(data) {
         circle.setAttribute("stroke-width", "2");
         g.appendChild(circle);
 
-        // Rank Spread Label (Above the line)
-        const spreadLabel = document.createElementNS(svgNS, "text");
-        spreadLabel.setAttribute("x", xHigh + 10);
-        spreadLabel.setAttribute("y", y + 4);
-        spreadLabel.setAttribute("text-anchor", "start");
-        spreadLabel.setAttribute("fill", "var(--text-muted)");
-        spreadLabel.setAttribute("font-size", "10px");
-        spreadLabel.textContent = `[${rankSpreadText}]`;
-        g.appendChild(spreadLabel);
-
         // Model Name Label (Horizontal on Y-Axis)
         const nameLabel = document.createElementNS(svgNS, "text");
         nameLabel.setAttribute("x", padding.left - 15);
@@ -641,6 +620,82 @@ function renderRankChart(data) {
 
         svg.appendChild(g);
     });
+
+    // Add X-axis label "Model Score" with info icon
+    const xAxisLabel = document.createElementNS(svgNS, "text");
+    xAxisLabel.setAttribute("x", padding.left + chartWidth / 2);
+    xAxisLabel.setAttribute("y", height - 15);
+    xAxisLabel.setAttribute("text-anchor", "middle");
+    xAxisLabel.setAttribute("fill", "var(--text-header)");
+    xAxisLabel.setAttribute("font-size", "13px");
+    xAxisLabel.setAttribute("font-weight", "600");
+    xAxisLabel.textContent = "Model Score";
+    svg.appendChild(xAxisLabel);
+
+    // Add info icon next to axis label (smaller, positioned above and to the right)
+    const infoIconX = padding.left + chartWidth / 2 + 48;
+    const infoIconY = height - 22;
+    const tooltipText = "Model score is a 95%-CI estimation of the % of correct answers a human annotator would have attributed to the model. Answer correctness is based on both answer and justification.";
+    
+    const infoGroup = document.createElementNS(svgNS, "g");
+    infoGroup.setAttribute("class", "svg-info-icon");
+    infoGroup.style.cursor = "help";
+    infoGroup.setAttribute("pointer-events", "all");
+    
+    // Circle background
+    const infoCircle = document.createElementNS(svgNS, "circle");
+    infoCircle.setAttribute("cx", infoIconX);
+    infoCircle.setAttribute("cy", infoIconY);
+    infoCircle.setAttribute("r", "5");
+    infoCircle.setAttribute("fill", "#4b5563");
+    infoCircle.setAttribute("stroke", "#6b7280");
+    infoCircle.setAttribute("stroke-width", "1");
+    infoGroup.appendChild(infoCircle);
+    
+    // "i" text
+    const infoText = document.createElementNS(svgNS, "text");
+    infoText.setAttribute("x", infoIconX);
+    infoText.setAttribute("y", infoIconY + 2.5);
+    infoText.setAttribute("text-anchor", "middle");
+    infoText.setAttribute("fill", "#e5e7eb");
+    infoText.setAttribute("font-size", "7px");
+    infoText.setAttribute("font-weight", "700");
+    infoText.setAttribute("font-style", "italic");
+    infoText.setAttribute("font-family", "serif");
+    infoText.setAttribute("pointer-events", "none");
+    infoText.textContent = "i";
+    infoGroup.appendChild(infoText);
+    
+    // Create HTML tooltip element
+    let axisTooltip = document.getElementById('axis-info-tooltip');
+    if (!axisTooltip) {
+        axisTooltip = document.createElement('div');
+        axisTooltip.id = 'axis-info-tooltip';
+        axisTooltip.className = 'axis-info-tooltip';
+        axisTooltip.textContent = tooltipText;
+        document.body.appendChild(axisTooltip);
+    }
+    
+    // Hover effect with tooltip
+    infoGroup.addEventListener("mouseenter", (e) => {
+        infoCircle.setAttribute("fill", "#2563eb");
+        infoCircle.setAttribute("stroke", "#2563eb");
+        infoText.setAttribute("fill", "#ffffff");
+        
+        // Position and show tooltip
+        const rect = infoGroup.getBoundingClientRect();
+        axisTooltip.style.left = (rect.left + rect.width / 2) + 'px';
+        axisTooltip.style.top = (rect.top - 10) + 'px';
+        axisTooltip.style.display = 'block';
+    });
+    infoGroup.addEventListener("mouseleave", () => {
+        infoCircle.setAttribute("fill", "#4b5563");
+        infoCircle.setAttribute("stroke", "#6b7280");
+        infoText.setAttribute("fill", "#e5e7eb");
+        axisTooltip.style.display = 'none';
+    });
+    
+    svg.appendChild(infoGroup);
 
     container.appendChild(svg);
 }
