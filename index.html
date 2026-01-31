@@ -90,19 +90,25 @@
             <section id="analytics" class="tab-pane">
                 <div class="analytics-container">
                     <div class="analytics-header">
-                        <div class="analytics-controls">
+                        <div class="analytics-title-group">
                             <h2>Performance by Category</h2>
-                            <p class="analytics-subtitle">Comparing all models across riddle categories</p>
+                            <p class="analytics-subtitle">Comparing model performance across riddle categories</p>
                         </div>
                     </div>
                     
-                    <div class="single-radar-container">
-                        <div id="analytics-radar-main" class="radar-card large">
+                    <div class="analytics-layout">
+                        <aside class="analytics-sidebar">
+                            <h3 class="sidebar-title">Model Legend</h3>
+                            <p class="sidebar-help">Click a model to toggle visibility</p>
                             <div id="radar-chart-legend" class="radar-legend"></div>
+                        </aside>
+                        
+                        <main class="analytics-main">
+                            <div id="radar-focus-ui" class="radar-focus-ui main-focus"></div>
                             <div id="radar-chart-main-container" class="radar-chart-container">
                                 <!-- Large single radar chart populated by JS -->
                             </div>
-                        </div>
+                        </main>
                     </div>
                 </div>
             </section>

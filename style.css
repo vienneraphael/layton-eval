@@ -275,10 +275,73 @@ svg {
     border: 1px solid var(--border-color);
 }
 
-.analytics-controls {
+.analytics-title-group {
     display: flex;
-    gap: 2rem;
+    flex-direction: column;
+}
+
+/* Model Search inside Multi-Select */
+.model-search-wrapper {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-surface);
+    z-index: 10;
+}
+
+#analytics-model-search {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    background-color: var(--bg-body);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+#analytics-model-search:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.radar-focus-ui.main-focus {
+    position: relative;
+    margin-bottom: 2rem;
+    background-color: var(--bg-surface-hover);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, transform 0.3s, visibility 0.3s;
+    z-index: 100;
+    display: flex;
     align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    transform: translateY(10px);
+}
+
+.radar-focus-ui.main-focus.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.radar-focus-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.radar-focus-name {
+    font-weight: 700;
+    color: var(--text-header);
+    font-size: 1.2rem;
+    letter-spacing: 0.02em;
 }
 
 .analytics-header h2 {
@@ -292,50 +355,110 @@ svg {
     font-size: 0.95rem;
 }
 
-.single-radar-container {
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.radar-card.large {
-    padding: 2rem;
+.analytics-layout {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 320px 1fr;
     gap: 2rem;
     align-items: start;
+    margin-top: 1rem;
+}
+
+.analytics-sidebar {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 850px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-header);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar-help {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+}
+
+.analytics-main {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
     min-height: 850px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .radar-legend {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    height: 800px;
+    max-height: 750px;
     overflow-y: auto;
-    padding-right: 1rem;
-    border-right: 1px solid var(--border-color);
+    padding-right: 0.5rem;
+}
+
+/* Custom Scrollbar for Legend */
+.radar-legend::-webkit-scrollbar {
+    width: 6px;
+}
+
+.radar-legend::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.radar-legend::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
+
+.radar-legend::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 .legend-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.5rem;
-    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
     font-size: 0.85rem;
     color: var(--text-main);
     cursor: pointer;
     transition: all 0.2s;
+    user-select: none;
+    border: 1px solid transparent;
 }
 
 .legend-item:hover {
     background-color: var(--bg-surface-hover);
+    border-color: var(--border-color);
+}
+
+.legend-item.disabled {
+    opacity: 0.4;
+}
+
+.legend-item.disabled .legend-name {
+    text-decoration: line-through;
 }
 
 .legend-item.active {
     background-color: rgba(37, 99, 235, 0.1);
     color: var(--text-header);
     font-weight: 600;
+    border-color: rgba(37, 99, 235, 0.2);
 }
 
 .legend-color {
@@ -343,6 +466,10 @@ svg {
     height: 12px;
     border-radius: 3px;
     flex-shrink: 0;
+}
+
+.legend-item.disabled .legend-color {
+    background-color: #4b5563 !important;
 }
 
 .radar-chart-container {
@@ -375,9 +502,9 @@ svg {
 }
 
 .radar-label {
-    font-size: 14px;
+    font-size: 16px;
     fill: var(--text-header);
-    font-weight: 600;
+    font-weight: 700;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
@@ -1351,11 +1478,12 @@ span.status-incorrect {
         padding: 1.5rem;
     }
     
-    .radar-legend {
+    .radar-legend-wrapper {
         height: 300px;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
         margin-bottom: 2rem;
+        padding-right: 0;
     }
 }
 

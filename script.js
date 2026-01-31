@@ -43,13 +43,58 @@ const state = {
     filters: {
         categories: new Set(['all']),
         picarats: new Set(['all']),
-        successRates: new Set(['all'])
+        successRates: new Set(['all']),
+        disabledAnalyticsModels: new Set() // For toggling in legend
     }
 };
 
 let categorySelect = null;
 let picaratsSelect = null;
 let successRateSelect = null;
+
+// Color helper
+function getModelColor(modelName, provider, index, total) {
+    const baseColor = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
+    
+    // Convert hex to HSL to vary the lightness/saturation slightly for uniqueness
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : { r: 107, g: 114, b: 128 };
+    };
+
+    const rgbToHsl = (r, g, b) => {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        return [h * 360, s * 100, l * 100];
+    };
+
+    const rgb = hexToRgb(baseColor);
+    const [h, s, l] = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    
+    // Vary hue slightly (±15 degrees) and lightness (±10%) based on index
+    // This keeps them visually close to provider but distinct
+    const hueOffset = ((index % 5) - 2) * 6; 
+    const lightnessOffset = ((index % 3) - 1) * 8;
+    
+    return `hsl(${h + hueOffset}, ${Math.min(100, s + 5)}%, ${Math.max(30, Math.min(80, l + lightnessOffset))}%)`;
+}
 
 // DOM Elements
 const elements = {
@@ -79,12 +124,20 @@ class MultiSelect {
         this.onChange = onChange;
         this.selectedValues = new Set(['all']);
         this.optionsMap = new Map();
+        this.allOptions = []; // Store original options for searching
         
         if (!this.container) return;
 
         this.trigger = this.container.querySelector('.multiselect-trigger');
         this.dropdown = this.container.querySelector('.multiselect-dropdown');
         this.triggerSpan = this.trigger.querySelector('span'); // First span
+        
+        // Search support
+        this.searchInput = this.container.querySelector('.model-search-input');
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', () => this.filterOptions());
+            this.searchInput.addEventListener('click', (e) => e.stopPropagation());
+        }
 
         this.initEvents();
     }
@@ -114,6 +167,11 @@ class MultiSelect {
 
         this.dropdown.classList.toggle('show');
         this.trigger.classList.toggle('active');
+        
+        if (this.dropdown.classList.contains('show') && this.searchInput) {
+            this.searchInput.focus();
+            this.filterOptions(); // Reset filter on open
+        }
     }
 
     close() {
@@ -122,34 +180,83 @@ class MultiSelect {
     }
 
     setOptions(options) {
+        this.allOptions = options;
         this.optionsMap = new Map(options.map(o => [String(o.value), o.label]));
-        this.dropdown.innerHTML = '';
-        
-        // Header with Clear button
-        const header = document.createElement('div');
-        header.className = 'multiselect-header';
-        header.innerHTML = `
-            <span>Select ${this.placeholder}</span>
-            <button class="btn-clear">Clear</button>
-        `;
-        header.querySelector('.btn-clear').onclick = (e) => {
-            e.stopPropagation();
-            this.selectAll();
-        };
-        this.dropdown.appendChild(header);
-
-        // All Option
-        this.addOption('all', `All ${this.placeholder}`);
-
-        // Other Options
-        options.forEach(opt => {
-            this.addOption(opt.value, opt.label);
-        });
-        
+        this.renderOptions(options);
         this.updateTrigger();
     }
 
-    addOption(value, label) {
+    filterOptions() {
+        if (!this.searchInput) return;
+        const query = this.searchInput.value.toLowerCase();
+        const filtered = this.allOptions.filter(o => 
+            o.label.toLowerCase().includes(query) || 
+            (o.provider && o.provider.toLowerCase().includes(query))
+        );
+        this.renderOptions(filtered, query.length > 0);
+    }
+
+    renderOptions(options, isSearching = false) {
+        // Find or create options list container
+        let listContainer = this.dropdown.querySelector('.model-options-list') || this.dropdown;
+        
+        // If it's the dropdown itself, we need to preserve the header and search wrapper
+        const header = this.dropdown.querySelector('.multiselect-header');
+        const searchWrapper = this.dropdown.querySelector('.model-search-wrapper');
+        
+        // Clear only the options
+        if (listContainer === this.dropdown) {
+            // Keep header and search
+            const children = Array.from(this.dropdown.children);
+            children.forEach(child => {
+                if (child !== header && child !== searchWrapper) {
+                    this.dropdown.removeChild(child);
+                }
+            });
+        } else {
+            listContainer.innerHTML = '';
+        }
+
+        if (!header && !isSearching) {
+            // Header with Clear button (only if not already there)
+            const newHeader = document.createElement('div');
+            newHeader.className = 'multiselect-header';
+            newHeader.innerHTML = `
+                <span>Select ${this.placeholder}</span>
+                <button class="btn-clear">Clear</button>
+            `;
+            newHeader.querySelector('.btn-clear').onclick = (e) => {
+                e.stopPropagation();
+                this.selectAll();
+            };
+            if (searchWrapper) {
+                this.dropdown.insertBefore(newHeader, searchWrapper);
+            } else {
+                this.dropdown.prepend(newHeader);
+            }
+        }
+
+        // All Option (only if not searching)
+        if (!isSearching) {
+            this.addOption('all', `All ${this.placeholder}`, listContainer);
+        }
+
+        // Other Options
+        options.forEach(opt => {
+            this.addOption(opt.value, opt.label, listContainer);
+        });
+        
+        if (options.length === 0) {
+            const noRes = document.createElement('div');
+            noRes.className = 'multiselect-option no-results';
+            noRes.style.color = 'var(--text-muted)';
+            noRes.style.justifyContent = 'center';
+            noRes.textContent = 'No matches found';
+            listContainer.appendChild(noRes);
+        }
+    }
+
+    addOption(value, label, container) {
         const div = document.createElement('div');
         div.className = 'multiselect-option';
         const strValue = String(value);
@@ -174,7 +281,7 @@ class MultiSelect {
             this.handleSelection(strValue, checkbox.checked);
         };
 
-        this.dropdown.appendChild(div);
+        container.appendChild(div);
     }
 
     handleSelection(value, isChecked) {
@@ -182,11 +289,6 @@ class MultiSelect {
             if (isChecked) {
                 this.selectAll();
             } else {
-                // If unchecking all, we should technically check everything else or empty?
-                // Standard behavior: 'All' is a special state.
-                // If user unchecks 'All', effectively nothing is selected -> usually show everything or nothing.
-                // Let's force it to stay checked if it was the only one?
-                // Or let's just re-select it if size is 0.
                 this.selectedValues.clear();
                 this.selectedValues.add('all');
             }
@@ -873,10 +975,10 @@ function renderAnalytics() {
     const riddlesMap = splitData.riddles;
     const results = splitData.results;
 
-    // 1. Calculate stats for ALL models by category
-    const modelStats = {}; // { modelName: { category: { total: 0, count: 0 } } }
+    // 1. Identify all models and their stats
+    const allModelsStats = {}; 
     const categories = new Set();
-
+    
     ppi.forEach(p => {
         const riddle = riddlesMap.get(p.riddle_id);
         if (!riddle) return;
@@ -906,24 +1008,30 @@ function renderAnalytics() {
             const cat = riddle.category || 'Unknown';
             categories.add(cat);
 
-            if (!modelStats[p.model]) modelStats[p.model] = {};
-            if (!modelStats[p.model][cat]) modelStats[p.model][cat] = { total: 0, count: 0 };
+            if (!allModelsStats[p.model]) allModelsStats[p.model] = {};
+            if (!allModelsStats[p.model][cat]) allModelsStats[p.model][cat] = { total: 0, count: 0 };
             
-            modelStats[p.model][cat].total += score;
-            modelStats[p.model][cat].count++;
+            allModelsStats[p.model][cat].total += score;
+            allModelsStats[p.model][cat].count++;
         }
     });
 
     const sortedCategories = Array.from(categories).sort();
     const sortedModels = results.map(r => r.model);
 
-    // 2. Render Single Large Radar Chart
+    // 2. Filter models to display - Show ALL models but allow toggling via legend
+    const modelsToDisplay = sortedModels;
+
+    // 3. Render Single Large Radar Chart
     elements.radarMainContainer.innerHTML = '';
     elements.radarLegend.innerHTML = '';
+    
+    // Find focus UI above the radar
+    const focusUI = document.getElementById('radar-focus-ui');
 
-    const size = 800; // Increased base size
+    const size = 800;
     const center = size / 2;
-    const radius = size * 0.38; // Slightly larger radius
+    const radius = size * 0.38;
     const svgNS = "http://www.w3.org/2000/svg";
 
     const svg = document.createElementNS(svgNS, "svg");
@@ -941,7 +1049,6 @@ function renderAnalytics() {
         circle.setAttribute("class", "radar-grid-circle");
         svg.appendChild(circle);
         
-        // Add % labels
         const text = document.createElementNS(svgNS, "text");
         text.setAttribute("x", center + 5);
         text.setAttribute("y", center - (radius * level) - 5);
@@ -952,7 +1059,7 @@ function renderAnalytics() {
         svg.appendChild(text);
     });
 
-    // Draw axes and labels
+    // Draw axes
     sortedCategories.forEach((cat, i) => {
         const angle = i * angleStep - Math.PI / 2;
         const x2 = center + Math.cos(angle) * radius;
@@ -966,7 +1073,7 @@ function renderAnalytics() {
         axis.setAttribute("class", "radar-axis");
         svg.appendChild(axis);
 
-        const labelDist = radius + 45; // More space for labels
+        const labelDist = radius + 45;
         const lx = center + Math.cos(angle) * labelDist;
         const ly = center + Math.sin(angle) * labelDist;
         
@@ -984,12 +1091,14 @@ function renderAnalytics() {
     const polygons = [];
     const legendItems = [];
 
-    sortedModels.forEach((modelName, modelIdx) => {
-        const stats = modelStats[modelName];
+    modelsToDisplay.forEach((modelName) => {
+        const stats = allModelsStats[modelName];
         if (!stats) return;
 
         const provider = splitData.modelProviders.get(modelName);
-        const color = PROVIDER_COLORS[provider] || 'var(--primary)';
+        const globalIdx = sortedModels.indexOf(modelName);
+        const color = getModelColor(modelName, provider, globalIdx, sortedModels.length);
+        const isDisabled = state.filters.disabledAnalyticsModels.has(modelName);
 
         const points = sortedCategories.map((cat, i) => {
             const angle = i * angleStep - Math.PI / 2;
@@ -1007,22 +1116,36 @@ function renderAnalytics() {
         polygon.style.stroke = color;
         polygon.style.fill = color;
         
-        const title = document.createElementNS(svgNS, "title");
-        title.textContent = modelName;
-        polygon.appendChild(title);
+        if (isDisabled) {
+            polygon.style.display = 'none';
+        }
         
         svg.appendChild(polygon);
         polygons.push(polygon);
 
         // Add to legend
         const legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
+        legendItem.className = `legend-item ${isDisabled ? 'disabled' : ''}`;
         legendItem.innerHTML = `
             <span class="legend-color" style="background-color: ${color}"></span>
             <span class="legend-name">${modelName}</span>
         `;
         
+        const showFocusUI = (name, color) => {
+            focusUI.innerHTML = `
+                <div class="radar-focus-color" style="background-color: ${color}"></div>
+                <div class="radar-focus-name">${name}</div>
+            `;
+            focusUI.classList.add('show');
+        };
+
+        const hideFocusUI = () => {
+            focusUI.classList.remove('show');
+        };
+
         const highlight = () => {
+            if (state.filters.disabledAnalyticsModels.has(modelName)) return;
+            
             legendItems.forEach(li => li.classList.remove('active'));
             legendItem.classList.add('active');
             polygons.forEach(p => {
@@ -1035,6 +1158,7 @@ function renderAnalytics() {
                     p.classList.remove('highlighted');
                 }
             });
+            showFocusUI(modelName, color);
         };
 
         const reset = () => {
@@ -1043,10 +1167,23 @@ function renderAnalytics() {
                 p.classList.remove('dimmed');
                 p.classList.remove('highlighted');
             });
+            hideFocusUI();
+        };
+
+        const toggle = (e) => {
+            e.stopPropagation();
+            if (state.filters.disabledAnalyticsModels.has(modelName)) {
+                state.filters.disabledAnalyticsModels.delete(modelName);
+            } else {
+                state.filters.disabledAnalyticsModels.add(modelName);
+            }
+            renderAnalytics(); // Re-render to update visibility
         };
 
         legendItem.onmouseenter = highlight;
         legendItem.onmouseleave = reset;
+        legendItem.onclick = toggle;
+        
         polygon.onmouseenter = highlight;
         polygon.onmouseleave = reset;
         
