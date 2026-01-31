@@ -93,12 +93,28 @@ svg text {
 }
 
 .social-icon.github:hover {
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+    color: #fff;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
 }
 
 .social-icon.linkedin:hover {
     color: #0077b5;
-    filter: drop-shadow(0 0 8px rgba(0, 119, 181, 0.8));
+    filter: drop-shadow(0 0 12px rgba(0, 119, 181, 0.6));
+}
+
+/* Subtle pulse animation to indicate interactivity */
+@keyframes pulse-glow {
+    0% { filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1)); }
+    50% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.2)); }
+    100% { filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1)); }
+}
+
+.social-icon {
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
+.social-icon:hover {
+    animation: none; /* Stop pulsing on hover so the stronger hover glow takes over */
 }
 
 .controls {
