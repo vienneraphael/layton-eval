@@ -1155,6 +1155,8 @@ function renderRiddleDetail(riddleId) {
         return;
     }
 
+    const modelCells = []; // Store cells to link them later
+
     // Header
     const h2 = document.createElement('h2');
     h2.textContent = getRiddleTitle(riddle);
@@ -1360,6 +1362,7 @@ function renderRiddleDetail(riddleId) {
         
         // Body
         const tbody = document.createElement('tbody');
+        
         predictions.forEach(pred => {
             const tr = document.createElement('tr');
             
@@ -1368,7 +1371,9 @@ function renderRiddleDetail(riddleId) {
             tdModel.className = 'model-name-cell';
             tdModel.textContent = pred.model;
             tdModel.style.color = PROVIDER_COLORS[pred.provider] || 'inherit';
+            tdModel.title = `Click to view ${pred.model}'s full prediction`;
             tr.appendChild(tdModel);
+            modelCells.push({ el: tdModel, model: pred.model });
             
             // Judges
             sortedJudges.forEach(j => {
@@ -1434,8 +1439,17 @@ function renderRiddleDetail(riddleId) {
             }
         };
 
-        new SearchableSelect(selectorContainer, options, initialModel, (val) => {
+        const modelSelector = new SearchableSelect(selectorContainer, options, initialModel, (val) => {
             renderSelectedCard(val);
+        });
+
+        // Link table cells to selector
+        modelCells.forEach(({ el, model }) => {
+            el.onclick = () => {
+                modelSelector.select(model);
+                // Scroll selector into view if it's far away
+                selectorContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
         });
 
         // Initial card

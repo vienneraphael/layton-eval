@@ -732,6 +732,16 @@ svg {
 .recap-table .model-name-cell {
     font-weight: 500;
     color: var(--text-header);
+    cursor: pointer;
+    text-decoration: underline dotted var(--border-color);
+    text-underline-offset: 4px;
+    transition: all 0.2s;
+}
+
+.recap-table .model-name-cell:hover {
+    color: var(--primary) !important;
+    text-decoration: underline solid var(--primary);
+    background-color: rgba(37, 99, 235, 0.05);
 }
 
 /* Global Status Colors - ensuring these are never white */
