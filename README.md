@@ -1,5 +1,13 @@
 # layton-eval: Asking LLMs and VLMs to solve Professor Layton's riddles
 
+<p align="center">
+<a href="https://huggingface.co/collections/rvienne/layton-eval" target="_blank">
+    <img src="https://img.shields.io/badge/huggingface-%23FFD21E.svg?style=for-the-badge&logo=huggingface&logoColor=black" alt="HF">
+<a href="https://vienneraphael.github.io/layton-eval/" target="_blank">
+    <img src="https://img.shields.io/badge/github%20pages-121013?style=for-the-badge&logo=github&logoColor=white" alt="GHP">
+</a>
+</p>
+
 This repo contains all that you need to independently compute the performance metric for any kind of model on the [layton-eval](https://huggingface.co/datasets/rvienne/layton-eval) eval benchmark dataset.
 
 ## Evaluate a model on the benchmark
