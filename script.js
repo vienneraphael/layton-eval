@@ -11,10 +11,8 @@ const SPLITS = {
         metadata: 'datasets/layton_eval_vlm.jsonl'
     },
     full: {
-        results: 'results.jsonl', // Assuming this exists or we fallback
-        ppi: 'ppi_llm.jsonl', // Fallback or Combined? Spec says results.jsonl for full. 
-                              // For PPI it lists ppi_llm and ppi_vlm. We might need to load both.
-                              // For simplicity/safety, we'll start with LLM files for Full if files missing.
+        results: 'benchmark_results/results_llm.jsonl', 
+        ppi: 'ppi/ppi_llm.jsonl', 
         metadata: 'datasets/layton_eval.jsonl'
     }
 };
@@ -303,29 +301,35 @@ async function loadSplit(split) {
     }
 
     const config = SPLITS[split];
+    if (!config) {
+        console.error(`No configuration found for split: ${split}`);
+        return;
+    }
     
     try {
-        // Load Leaderboard
-        const results = await loadJSONL(config.results);
+        console.log(`Loading data for split: ${split}...`);
+        
+        // Load all data in parallel for better performance
+        const [results, metadata, ppi] = await Promise.all([
+            loadJSONL(config.results),
+            loadJSONL(config.metadata),
+            loadJSONL(config.ppi)
+        ]);
+
         state.cache[split].results = results;
-
-        // Load Metadata (Riddles)
-        const metadata = await loadJSONL(config.metadata);
-        // Index by ID
+        
+        // Index Metadata by ID
         state.cache[split].riddles = new Map(metadata.map(r => [r.id, r]));
-
-        // Load Predictions (PPI)
-        // If 'full', we might need to load multiple, but let's stick to config
-        // Note: For 'full', we might want to merge, but let's keep it simple for v1
-        const ppi = await loadJSONL(config.ppi);
+        
         state.cache[split].ppi = ppi;
-
         state.cache[split].loaded = true;
+        
+        console.log(`Successfully loaded ${results.length} results, ${metadata.length} riddles, and ${ppi.length} predictions.`);
+        
         onDataLoaded();
 
     } catch (e) {
         console.error("Failed to load data for split " + split, e);
-        // If file not found, try to handle gracefully (e.g. if VLM missing)
         if (split !== 'llm') {
              alert(`Data for ${split} split not found or incomplete. Check console.`);
         }
@@ -334,22 +338,31 @@ async function loadSplit(split) {
 
 async function loadJSONL(url) {
     try {
+        console.log(`Fetching: ${url}`);
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+            throw new Error(`HTTP ${response.status}`);
+        }
         const text = await response.text();
-        return text.trim().split('\n')
+        const lines = text.trim().split('\n');
+        console.log(`Received ${lines.length} lines from ${url}`);
+        
+        return lines
             .filter(line => line.trim())
-            .map(line => {
+            .map((line, index) => {
                 try {
                     return JSON.parse(line);
                 } catch (e) {
-                    console.warn("Skipping invalid JSON line", e);
+                    if (index === 0) {
+                        console.warn(`Potential JSON parse error on first line of ${url}. Check for BOM or encoding issues.`, e);
+                    }
                     return null;
                 }
             })
             .filter(item => item !== null);
     } catch (e) {
-        console.warn(`Could not load ${url}`, e);
+        console.warn(`Could not load ${url}. Error:`, e);
         return []; // Return empty array on failure
     }
 }
