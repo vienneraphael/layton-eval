@@ -27,8 +27,8 @@ const PROVIDER_COLORS = {
 const state = {
     currentSplit: 'llm',
     cache: {
-        llm: {},
-        vlm: {}
+        llm: { judges: [] },
+        vlm: { judges: [] }
     },
     activeTab: 'leaderboard',
     selectedRiddleId: null,
@@ -319,10 +319,25 @@ async function loadSplit(split) {
 
         state.cache[split].results = results;
         
+        // Build model-to-provider map
+        state.cache[split].modelProviders = new Map(results.map(r => [r.model, r.provider]));
+        
         // Index Metadata by ID
         state.cache[split].riddles = new Map(metadata.map(r => [r.id, r]));
         
         state.cache[split].ppi = ppi;
+        
+        // Identify all judges for this split
+        const judges = new Set();
+        ppi.forEach(p => {
+            Object.keys(p).forEach(k => {
+                if (k.startsWith('both_correct_')) {
+                    judges.add(k.replace('both_correct_', ''));
+                }
+            });
+        });
+        state.cache[split].judges = Array.from(judges).sort();
+
         state.cache[split].loaded = true;
         
         console.log(`Successfully loaded ${results.length} results, ${metadata.length} riddles, and ${ppi.length} predictions.`);
@@ -853,6 +868,21 @@ function getRiddleTitle(riddle) {
     return title;
 }
 
+function getProviderFromModelName(modelName, modelProviders) {
+    if (modelProviders && modelProviders.has(modelName)) {
+        return modelProviders.get(modelName);
+    }
+    
+    const name = modelName.toLowerCase();
+    if (name.includes('gpt') || name.includes('openai') || name.includes('o1') || name.includes('o3')) return 'openai';
+    if (name.includes('claude') || name.includes('anthropic')) return 'anthropic';
+    if (name.includes('gemini') || name.includes('google')) return 'gemini';
+    if (name.includes('mistral') || name.includes('mixtral')) return 'mistral';
+    if (name.includes('llama') || name.includes('meta')) return 'meta';
+    if (name.includes('qwen')) return 'together';
+    return 'default';
+}
+
 function filterRiddleGrid() {
     const query = elements.riddleSearch.value.toLowerCase();
     const selectedCats = state.filters.categories;
@@ -1072,6 +1102,116 @@ function renderRiddleDetail(riddleId) {
         container.appendChild(hintsSection);
     }
 
+    // Recap Table
+    if (predictions.length > 0) {
+        const recapContainer = document.createElement('div');
+        recapContainer.className = 'recap-table-container';
+        
+        const table = document.createElement('table');
+        table.className = 'recap-table';
+        
+        // Use pre-identified judges for this split
+        const sortedJudges = splitData.judges || [];
+        
+        // Header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        
+        const thModel = document.createElement('th');
+        thModel.textContent = 'Model';
+        headerRow.appendChild(thModel);
+        
+        const thOverall = document.createElement('th');
+        thOverall.textContent = 'Overall';
+        headerRow.appendChild(thOverall);
+        
+        // Up to 4 judges as per TODO, but let's be flexible while following the requirement
+        sortedJudges.forEach((j, i) => {
+            const th = document.createElement('th');
+            // Show shortened judge name or J1, J2...
+            th.textContent = `J${i+1}`;
+            th.title = j; // Full name on hover
+            
+            // Color based on provider
+            const provider = getProviderFromModelName(j, splitData.modelProviders);
+            th.style.color = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
+            th.style.fontWeight = '700';
+            
+            headerRow.appendChild(th);
+        });
+        
+        // Fill up to 4 if needed? The TODO says "the 4 judges". 
+        // If there are fewer than 4, should I add empty columns?
+        // If there are more, should I show them all?
+        // I'll show what's there, but ensure we don't exceed 4 if that's a strict UI constraint.
+        // Actually, let's just show all available judges found in the data.
+        
+        const thHuman = document.createElement('th');
+        thHuman.textContent = 'Human';
+        headerRow.appendChild(thHuman);
+        
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // Body
+        const tbody = document.createElement('tbody');
+        predictions.forEach(pred => {
+            const tr = document.createElement('tr');
+            
+            // Model
+            const tdModel = document.createElement('td');
+            tdModel.className = 'model-name-cell';
+            tdModel.textContent = pred.model;
+            tdModel.style.color = PROVIDER_COLORS[pred.provider] || 'inherit';
+            tr.appendChild(tdModel);
+            
+            // Overall
+            const tdOverall = document.createElement('td');
+            let overallScore = 0;
+            let valid = false;
+            if (pred.human_both_correct !== null && pred.human_both_correct !== undefined) {
+                overallScore = pred.human_both_correct ? 1 : 0;
+                valid = true;
+            } else {
+                let sum = 0;
+                let count = 0;
+                sortedJudges.forEach(j => {
+                    const val = pred[`both_correct_${j}`];
+                    if (val !== null && val !== undefined) {
+                        sum += val ? 1 : 0;
+                        count++;
+                    }
+                });
+                if (count > 0) {
+                    overallScore = sum / count;
+                    valid = true;
+                }
+            }
+            tdOverall.innerHTML = valid ? renderCheckCross(overallScore >= 0.5) : '';
+            tr.appendChild(tdOverall);
+            
+            // Judges
+            sortedJudges.forEach(j => {
+                const td = document.createElement('td');
+                const val = pred[`both_correct_${j}`];
+                td.innerHTML = val !== null && val !== undefined ? renderCheckCross(val) : '';
+                tr.appendChild(td);
+            });
+            
+            // Human
+            const tdHuman = document.createElement('td');
+            const hVal = pred.human_both_correct;
+            tdHuman.innerHTML = hVal !== null && hVal !== undefined ? renderCheckCross(hVal) : '';
+            tr.appendChild(tdHuman);
+            
+            tbody.appendChild(tr);
+        });
+        
+        table.appendChild(tbody);
+        recapContainer.appendChild(table);
+        container.appendChild(recapContainer);
+    }
+
     // Model Predictions & Judges
     const predHeader = document.createElement('h3');
     predHeader.textContent = "Model Predictions & Evaluations";
@@ -1171,7 +1311,13 @@ function createJudgeCard(name, ans, just, both) {
 }
 
 function renderStatus(val) {
-    if (val === true) return '<span class="status-correct">Correct</span>';
-    if (val === false) return '<span class="status-incorrect">Incorrect</span>';
+    if (val === true) return '<span class="status-correct" style="color:#3fb950 !important; font-weight:bold;">✓ Correct</span>';
+    if (val === false) return '<span class="status-incorrect" style="color:#f85149 !important; font-weight:bold;">✗ Incorrect</span>';
     return '<span class="status-null">N/A</span>';
+}
+
+function renderCheckCross(val) {
+    if (val === true) return '<span class="status-icon status-check" style="color:#3fb950 !important; font-weight:bold;">✓</span>';
+    if (val === false) return '<span class="status-icon status-cross" style="color:#f85149 !important; font-weight:bold;">✗</span>';
+    return '<span class="status-icon status-empty">-</span>';
 }
