@@ -115,8 +115,6 @@ kiwisolver==1.4.9
     # via matplotlib
 llvmlite==0.45.1
     # via numba
-mapie==1.1.0
-    # via layton-eval
 markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.3
@@ -140,7 +138,6 @@ numba==0.62.1
 numpy==2.3.4
     # via
     #   contourpy
-    #   mapie
     #   matplotlib
     #   numba
     #   pandas
@@ -252,13 +249,9 @@ rpds-py==0.30.0
     #   jsonschema
     #   referencing
 scikit-learn==1.7.2
-    # via
-    #   layton-eval
-    #   mapie
-    #   ppi-python
+    # via ppi-python
 scipy==1.16.3
     # via
-    #   mapie
     #   scikit-learn
     #   statsmodels
 shellingham==1.5.4
