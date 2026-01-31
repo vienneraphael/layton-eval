@@ -62,6 +62,45 @@ svg text {
     font-weight: 700;
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.social-links {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.social-icon {
+    color: var(--text-muted);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.social-icon svg {
+    display: block;
+}
+
+.social-icon:hover {
+    color: var(--text-header);
+    transform: translateY(-2px);
+}
+
+.social-icon.github:hover {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+
+.social-icon.linkedin:hover {
+    color: #0077b5;
+    filter: drop-shadow(0 0 8px rgba(0, 119, 181, 0.8));
+}
+
 .controls {
     display: flex;
     align-items: center;
