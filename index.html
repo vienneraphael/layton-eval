@@ -41,6 +41,7 @@
                     </div>
                     <nav class="main-nav">
                         <button class="nav-btn active" data-tab="leaderboard">Leaderboard</button>
+                        <button class="nav-btn" data-tab="analytics">Analytics</button>
                         <button class="nav-btn" data-tab="visualizer">Visualizer</button>
                     </nav>
                 </div>
@@ -85,7 +86,28 @@
                 </div>
             </section>
 
-            <!-- Tab 2: Visualizer -->
+            <!-- Tab 2: Analytics -->
+            <section id="analytics" class="tab-pane">
+                <div class="analytics-container">
+                    <div class="analytics-header">
+                        <div class="analytics-controls">
+                            <h2>Performance by Category</h2>
+                            <p class="analytics-subtitle">Comparing all models across riddle categories</p>
+                        </div>
+                    </div>
+                    
+                    <div class="single-radar-container">
+                        <div id="analytics-radar-main" class="radar-card large">
+                            <div id="radar-chart-legend" class="radar-legend"></div>
+                            <div id="radar-chart-main-container" class="radar-chart-container">
+                                <!-- Large single radar chart populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 3: Visualizer -->
             <section id="visualizer" class="tab-pane">
                 <div class="visualizer-container">
                     <div class="visualizer-header">

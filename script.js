@@ -54,10 +54,11 @@ let successRateSelect = null;
 // DOM Elements
 const elements = {
     splitSelect: document.getElementById('split-select'),
-    tabs: document.querySelectorAll('.nav-btn'),
     tabPanes: document.querySelectorAll('.tab-pane'),
     leaderboardBody: document.querySelector('#leaderboard-table tbody'),
     rankChart: document.getElementById('rank-chart'),
+    radarMainContainer: document.getElementById('radar-chart-main-container'),
+    radarLegend: document.getElementById('radar-chart-legend'),
     riddleGrid: document.getElementById('riddle-grid'),
     riddleSearch: document.getElementById('riddle-search'),
     modal: document.getElementById('riddle-modal'),
@@ -380,7 +381,8 @@ function initEventListeners() {
     });
 
     // Tabs
-    elements.tabs.forEach(btn => {
+    const tabs = document.querySelectorAll('.nav-btn');
+    tabs.forEach(btn => {
         btn.addEventListener('click', () => {
             switchTab(btn.dataset.tab);
         });
@@ -423,7 +425,8 @@ function switchTab(tabId) {
     state.activeTab = tabId;
     
     // Update buttons
-    elements.tabs.forEach(btn => {
+    const tabs = document.querySelectorAll('.nav-btn');
+    tabs.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
 
@@ -435,6 +438,8 @@ function switchTab(tabId) {
     // Trigger render if needed (e.g. chart resize)
     if (tabId === 'leaderboard') {
         renderLeaderboard(); // Re-render to ensure chart size is correct
+    } else if (tabId === 'analytics') {
+        renderAnalytics();
     }
 }
 
@@ -539,6 +544,9 @@ async function loadJSONL(url) {
 function onDataLoaded() {
     renderLeaderboard();
     populateRiddleList();
+    if (state.activeTab === 'analytics') {
+        renderAnalytics();
+    }
 }
 
 // --- Leaderboard Logic ---
@@ -851,6 +859,206 @@ function renderRankChart(data) {
     svg.appendChild(infoGroup);
 
     container.appendChild(svg);
+}
+
+// --- Analytics Logic ---
+
+function renderAnalytics() {
+    if (state.activeTab !== 'analytics') return;
+    
+    const splitData = state.cache[state.currentSplit];
+    if (!splitData || !splitData.loaded) return;
+
+    const ppi = splitData.ppi;
+    const riddlesMap = splitData.riddles;
+    const results = splitData.results;
+
+    // 1. Calculate stats for ALL models by category
+    const modelStats = {}; // { modelName: { category: { total: 0, count: 0 } } }
+    const categories = new Set();
+
+    ppi.forEach(p => {
+        const riddle = riddlesMap.get(p.riddle_id);
+        if (!riddle) return;
+
+        let score = 0;
+        let valid = false;
+
+        if (p.human_both_correct !== null && p.human_both_correct !== undefined) {
+            score = p.human_both_correct ? 1 : 0;
+            valid = true;
+        } else {
+            let judgeScoreSum = 0;
+            let judgeCount = 0;
+            Object.keys(p).forEach(k => {
+                if (k.startsWith('both_correct_') && p[k] !== null) {
+                    judgeScoreSum += p[k] ? 1 : 0;
+                    judgeCount++;
+                }
+            });
+            if (judgeCount > 0) {
+                score = judgeScoreSum / judgeCount;
+                valid = true;
+            }
+        }
+
+        if (valid) {
+            const cat = riddle.category || 'Unknown';
+            categories.add(cat);
+
+            if (!modelStats[p.model]) modelStats[p.model] = {};
+            if (!modelStats[p.model][cat]) modelStats[p.model][cat] = { total: 0, count: 0 };
+            
+            modelStats[p.model][cat].total += score;
+            modelStats[p.model][cat].count++;
+        }
+    });
+
+    const sortedCategories = Array.from(categories).sort();
+    const sortedModels = results.map(r => r.model);
+
+    // 2. Render Single Large Radar Chart
+    elements.radarMainContainer.innerHTML = '';
+    elements.radarLegend.innerHTML = '';
+
+    const size = 800; // Increased base size
+    const center = size / 2;
+    const radius = size * 0.38; // Slightly larger radius
+    const svgNS = "http://www.w3.org/2000/svg";
+
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+    svg.setAttribute("class", "radar-chart-svg");
+
+    const angleStep = (Math.PI * 2) / sortedCategories.length;
+
+    // Draw background circles
+    [0.2, 0.4, 0.6, 0.8, 1.0].forEach(level => {
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("cx", center);
+        circle.setAttribute("cy", center);
+        circle.setAttribute("r", radius * level);
+        circle.setAttribute("class", "radar-grid-circle");
+        svg.appendChild(circle);
+        
+        // Add % labels
+        const text = document.createElementNS(svgNS, "text");
+        text.setAttribute("x", center + 5);
+        text.setAttribute("y", center - (radius * level) - 5);
+        text.setAttribute("font-size", "11px");
+        text.setAttribute("fill", "var(--text-muted)");
+        text.setAttribute("font-weight", "600");
+        text.textContent = `${Math.round(level * 100)}%`;
+        svg.appendChild(text);
+    });
+
+    // Draw axes and labels
+    sortedCategories.forEach((cat, i) => {
+        const angle = i * angleStep - Math.PI / 2;
+        const x2 = center + Math.cos(angle) * radius;
+        const y2 = center + Math.sin(angle) * radius;
+
+        const axis = document.createElementNS(svgNS, "line");
+        axis.setAttribute("x1", center);
+        axis.setAttribute("y1", center);
+        axis.setAttribute("x2", x2);
+        axis.setAttribute("y2", y2);
+        axis.setAttribute("class", "radar-axis");
+        svg.appendChild(axis);
+
+        const labelDist = radius + 45; // More space for labels
+        const lx = center + Math.cos(angle) * labelDist;
+        const ly = center + Math.sin(angle) * labelDist;
+        
+        const text = document.createElementNS(svgNS, "text");
+        text.setAttribute("x", lx);
+        text.setAttribute("y", ly);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        text.setAttribute("class", "radar-label");
+        text.textContent = cat;
+        svg.appendChild(text);
+    });
+
+    // Draw models
+    const polygons = [];
+    const legendItems = [];
+
+    sortedModels.forEach((modelName, modelIdx) => {
+        const stats = modelStats[modelName];
+        if (!stats) return;
+
+        const provider = splitData.modelProviders.get(modelName);
+        const color = PROVIDER_COLORS[provider] || 'var(--primary)';
+
+        const points = sortedCategories.map((cat, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const performance = stats[cat] ? (stats[cat].total / stats[cat].count) : 0;
+            const dist = radius * performance;
+            const x = center + Math.cos(angle) * dist;
+            const y = center + Math.sin(angle) * dist;
+            return `${x},${y}`;
+        }).join(" ");
+
+        const polygon = document.createElementNS(svgNS, "polygon");
+        polygon.setAttribute("points", points);
+        polygon.setAttribute("class", "radar-area");
+        polygon.setAttribute("data-model", modelName);
+        polygon.style.stroke = color;
+        polygon.style.fill = color;
+        
+        const title = document.createElementNS(svgNS, "title");
+        title.textContent = modelName;
+        polygon.appendChild(title);
+        
+        svg.appendChild(polygon);
+        polygons.push(polygon);
+
+        // Add to legend
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.innerHTML = `
+            <span class="legend-color" style="background-color: ${color}"></span>
+            <span class="legend-name">${modelName}</span>
+        `;
+        
+        const highlight = () => {
+            legendItems.forEach(li => li.classList.remove('active'));
+            legendItem.classList.add('active');
+            polygons.forEach(p => {
+                if (p === polygon) {
+                    p.classList.remove('dimmed');
+                    p.classList.add('highlighted');
+                    p.parentNode.appendChild(p); // Bring to front
+                } else {
+                    p.classList.add('dimmed');
+                    p.classList.remove('highlighted');
+                }
+            });
+        };
+
+        const reset = () => {
+            legendItem.classList.remove('active');
+            polygons.forEach(p => {
+                p.classList.remove('dimmed');
+                p.classList.remove('highlighted');
+            });
+        };
+
+        legendItem.onmouseenter = highlight;
+        legendItem.onmouseleave = reset;
+        polygon.onmouseenter = highlight;
+        polygon.onmouseleave = reset;
+        
+        elements.radarLegend.appendChild(legendItem);
+        legendItems.push(legendItem);
+    });
+
+    elements.radarMainContainer.appendChild(svg);
+}
+
+function renderRadarChart(container, stats, labels, provider) {
+    // Kept for potential internal use but main logic now in renderAnalytics
 }
 
 // --- Visualizer Logic ---

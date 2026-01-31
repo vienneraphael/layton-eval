@@ -260,6 +260,222 @@ svg {
     display: block; /* Prevent inline descender space */
 }
 
+/* Analytics */
+.analytics-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.analytics-header {
+    margin-bottom: 2rem;
+    background-color: var(--bg-surface);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.analytics-controls {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.analytics-header h2 {
+    color: var(--text-header);
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.analytics-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.single-radar-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.radar-card.large {
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+    min-height: 850px;
+}
+
+.radar-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 800px;
+    overflow-y: auto;
+    padding-right: 1rem;
+    border-right: 1px solid var(--border-color);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.legend-item:hover {
+    background-color: var(--bg-surface-hover);
+}
+
+.legend-item.active {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--text-header);
+    font-weight: 600;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.radar-chart-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    aspect-ratio: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.radar-chart-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.radar-axis {
+    stroke: var(--border-color);
+    stroke-width: 1;
+}
+
+.radar-grid-circle {
+    fill: none;
+    stroke: var(--border-color);
+    stroke-width: 1;
+    stroke-dasharray: 4;
+}
+
+.radar-label {
+    font-size: 14px;
+    fill: var(--text-header);
+    font-weight: 600;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+.radar-area {
+    fill-opacity: 0.08;
+    stroke-width: 2;
+    transition: fill-opacity 0.3s, stroke-width 0.3s, opacity 0.3s;
+}
+
+.radar-area:hover {
+    fill-opacity: 0.5;
+    stroke-width: 4;
+    cursor: pointer;
+}
+
+.radar-area.highlighted {
+    fill-opacity: 0.6;
+    stroke-width: 5;
+    opacity: 1 !important;
+}
+
+.radar-area.dimmed {
+    opacity: 0.03;
+}
+
+.radar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.radar-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.radar-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--text-muted);
+}
+
+.radar-card h3 {
+    margin-bottom: 1rem;
+    color: var(--text-header);
+    font-size: 1.1rem;
+    text-align: center;
+    width: 100%;
+}
+
+.radar-chart-container {
+    width: 100%;
+    aspect-ratio: 1;
+    position: relative;
+}
+
+.radar-chart-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.radar-axis {
+    stroke: var(--border-color);
+    stroke-width: 1;
+}
+
+.radar-grid-circle {
+    fill: none;
+    stroke: var(--border-color);
+    stroke-width: 1;
+    stroke-dasharray: 4;
+}
+
+.radar-label {
+    font-size: 10px;
+    fill: var(--text-muted);
+    font-weight: 500;
+}
+
+.radar-area {
+    fill: var(--primary);
+    fill-opacity: 0.3;
+    stroke: var(--primary);
+    stroke-width: 2;
+}
+
+.radar-point {
+    fill: var(--primary);
+    stroke: var(--bg-surface);
+    stroke-width: 1.5;
+}
+
 /* Visualizer */
 .visualizer-container {
     max-width: 1400px;
@@ -1129,6 +1345,20 @@ span.status-incorrect {
 }
 
 /* Mobile Styles */
+@media (max-width: 1024px) {
+    .radar-card.large {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+    }
+    
+    .radar-legend {
+        height: 300px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+}
+
 @media (max-width: 768px) {
     .header-content {
         flex-direction: column;
