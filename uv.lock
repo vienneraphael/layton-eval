@@ -719,14 +719,12 @@ dependencies = [
     { name = "batchling" },
     { name = "ipykernel" },
     { name = "json-repair" },
-    { name = "mapie" },
     { name = "matplotlib" },
     { name = "polars" },
     { name = "ppi-python" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
-    { name = "scikit-learn" },
     { name = "streamlit" },
     { name = "watchdog" },
 ]
@@ -741,14 +739,12 @@ requires-dist = [
     { name = "batchling", directory = "../batchling" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "json-repair", specifier = ">=0.55.0" },
-    { name = "mapie", specifier = ">=1.1.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "polars", specifier = ">=1.37.1" },
     { name = "ppi-python", specifier = ">=0.2.3" },
     { name = "pydantic", specifier = ">=2.12.0" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "scikit-learn", specifier = ">=1.7.2" },
     { name = "streamlit", specifier = ">=1.52.2" },
     { name = "watchdog", specifier = ">=6.0.0" },
 ]
@@ -772,20 +768,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/97/ad1a907c0173a90dd4df7228f24a3ec61058bc1a9ff8a0caec20a0cc622e/llvmlite-0.45.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:57c48bf2e1083eedbc9406fb83c4e6483017879714916fe8be8a72a9672c995a", size = 56288210, upload-time = "2025-10-01T18:01:40.26Z" },
     { url = "https://files.pythonhosted.org/packages/32/d8/c99c8ac7a326e9735401ead3116f7685a7ec652691aeb2615aa732b1fc4a/llvmlite-0.45.1-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3aa3dfceda4219ae39cf18806c60eeb518c1680ff834b8b311bd784160b9ce40", size = 55140957, upload-time = "2025-10-01T18:02:46.244Z" },
     { url = "https://files.pythonhosted.org/packages/09/56/ed35668130e32dbfad2eb37356793b0a95f23494ab5be7d9bf5cb75850ee/llvmlite-0.45.1-cp313-cp313-win_amd64.whl", hash = "sha256:080e6f8d0778a8239cd47686d402cb66eb165e421efa9391366a9b7e5810a38b", size = 38132232, upload-time = "2025-10-01T18:05:14.477Z" },
-]
-
-[[package]]
-name = "mapie"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "scikit-learn" },
-    { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/1d/f94517b62388be60fb850104a5832222005d9f9266fdca7921c17589edd3/mapie-1.1.0.tar.gz", hash = "sha256:13e1a8912cfcd66e770e80fe350797265684c1476f06adcde89c785eac628743", size = 151387, upload-time = "2025-09-22T16:07:52.233Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f5/48/86ffbbc57300844804e2164dcbd3749695c8722b5a2501a7c361e7915325/mapie-1.1.0-py3-none-any.whl", hash = "sha256:643b7cf5286fdc91cf932e871aa9bf9cb0311538a27791e81f09bebaf406120b", size = 187088, upload-time = "2025-09-22T16:07:50.814Z" },
 ]
 
 [[package]]
