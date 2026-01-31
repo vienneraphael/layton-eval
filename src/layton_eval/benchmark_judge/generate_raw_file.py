@@ -88,20 +88,25 @@ def generate_raw_file(
                 answer_dict = json.loads(row.get("answer_results"))
             except json.JSONDecodeError:
                 answer_dict = json.loads(repair_json(row.get("answer_results")))
+            if isinstance(answer_dict, list):
+                answer_dict = {
+                    "answer": "",
+                    "justification": "",
+                }
             content.append(
                 {
                     "type": "text",
-                    "text": f"Participant answer: {answer_dict.get('answer')}",
+                    "text": f"Participant answer: {answer_dict.get('answer', '')}",
                 }
             )
-            total_chars += len(answer_dict.get("answer"))
+            total_chars += len(answer_dict.get("answer", ""))
             content.append(
                 {
                     "type": "text",
-                    "text": f"Participant justification: {answer_dict.get('justification')}",
+                    "text": f"Participant justification: {answer_dict.get('justification', '')}",
                 }
             )
-            total_chars += len(answer_dict.get("justification"))
+            total_chars += len(answer_dict.get("justification", ""))
             raw_request["messages"] = [
                 {
                     "role": "user",
