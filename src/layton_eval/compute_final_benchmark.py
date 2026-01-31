@@ -99,9 +99,9 @@ def compute_final_ranks(results_df: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def main(field_name: str):
+def main(field_name: str, split: str):
     df_ppi = pl.read_ndjson(
-        "hf://datasets/rvienne/layton-eval-ppi/ppi_llm.jsonl", infer_schema_length=100000
+        f"hf://datasets/rvienne/layton-eval-ppi/ppi_{split}.jsonl", infer_schema_length=100000
     )
     results_df = get_benchmark_results(df_ppi, field_name=field_name)
     df_final = compute_final_ranks(results_df).select(
@@ -112,11 +112,12 @@ def main(field_name: str):
         "95% CI (±)",
         "provider",
     )
-    df_final.write_ndjson("results_llm.jsonl")
+    df_final.write_ndjson(f"results_{split}.jsonl")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--field_name", type=str, default="both_correct")
+    parser.add_argument("--field-name", type=str, default="both_correct")
+    parser.add_argument("--split", type=str, default="llm")
     args = parser.parse_args()
-    main(args.field_name)
+    main(args.field_name, args.split)
