@@ -793,6 +793,97 @@ span.status-incorrect {
     font-size: 0.9rem;
 }
 
+/* Model Search Select */
+.model-selector-wrapper {
+    margin-bottom: 1.5rem;
+    position: relative;
+    max-width: 500px;
+}
+
+.model-select-trigger {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.model-select-trigger:hover {
+    border-color: var(--text-muted);
+}
+
+.model-select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+
+.model-select-dropdown.show {
+    display: flex;
+    flex-direction: column;
+}
+
+.model-search-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background-color: var(--bg-surface-hover);
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-header);
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+.model-search-input:focus {
+    outline: none;
+    background-color: var(--bg-surface);
+}
+
+.model-options-list {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.model-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.model-option:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-header);
+}
+
+.model-option.selected {
+    background-color: rgba(37, 99, 235, 0.2);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.model-option .provider-prefix {
+    color: var(--text-muted);
+    font-weight: normal;
+    font-size: 0.85rem;
+}
+
 /* Success Rate Badge Colors */
 .badge-success {
     font-weight: 600;

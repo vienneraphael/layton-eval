@@ -235,6 +235,103 @@ class MultiSelect {
     }
 }
 
+class SearchableSelect {
+    constructor(container, options, initialValue, onSelect) {
+        this.container = container;
+        this.options = options; // [{value, label, provider}]
+        this.onSelect = onSelect;
+        this.selectedValue = initialValue;
+        this.isOpen = false;
+        
+        this.render();
+    }
+
+    render() {
+        this.container.innerHTML = `
+            <div class="model-selector-wrapper">
+                <button class="model-select-trigger">
+                    <span class="current-value"></span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="model-select-dropdown">
+                    <input type="text" class="model-search-input" placeholder="Search model...">
+                    <div class="model-options-list"></div>
+                </div>
+            </div>
+        `;
+
+        this.trigger = this.container.querySelector('.model-select-trigger');
+        this.dropdown = this.container.querySelector('.model-select-dropdown');
+        this.searchInput = this.container.querySelector('.model-search-input');
+        this.optionsList = this.container.querySelector('.model-options-list');
+        this.currentValueSpan = this.container.querySelector('.current-value');
+
+        this.updateTriggerText();
+        this.renderOptions(this.options);
+
+        this.trigger.onclick = (e) => {
+            e.stopPropagation();
+            this.toggle();
+        };
+
+        this.searchInput.onclick = (e) => e.stopPropagation();
+        this.searchInput.oninput = () => {
+            const query = this.searchInput.value.toLowerCase();
+            const filtered = this.options.filter(o => 
+                o.label.toLowerCase().includes(query) || 
+                (o.provider && o.provider.toLowerCase().includes(query))
+            );
+            this.renderOptions(filtered);
+        };
+
+        document.addEventListener('click', () => this.close());
+    }
+
+    updateTriggerText() {
+        const selected = this.options.find(o => o.value === this.selectedValue);
+        if (selected) {
+            this.currentValueSpan.innerHTML = `<span class="provider-prefix">${selected.provider}:</span> ${selected.label}`;
+        } else {
+            this.currentValueSpan.textContent = 'Select a model';
+        }
+    }
+
+    renderOptions(options) {
+        this.optionsList.innerHTML = '';
+        options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = `model-option ${opt.value === this.selectedValue ? 'selected' : ''}`;
+            div.innerHTML = `<span class="provider-prefix">${opt.provider}:</span> ${opt.label}`;
+            div.onclick = (e) => {
+                e.stopPropagation();
+                this.select(opt.value);
+            };
+            this.optionsList.appendChild(div);
+        });
+    }
+
+    toggle() {
+        this.isOpen = !this.isOpen;
+        this.dropdown.classList.toggle('show', this.isOpen);
+        if (this.isOpen) {
+            this.searchInput.focus();
+        }
+    }
+
+    close() {
+        this.isOpen = false;
+        this.dropdown.classList.remove('show');
+    }
+
+    select(value) {
+        this.selectedValue = value;
+        this.updateTriggerText();
+        this.renderOptions(this.options);
+        this.close();
+        if (this.onSelect) this.onSelect(value);
+    }
+}
+
 function initEventListeners() {
     // Split Selector
     elements.splitSelect.addEventListener('change', (e) => {
@@ -333,6 +430,13 @@ async function loadSplit(split) {
         // Index Metadata by ID
         state.cache[split].riddles = new Map(metadata.map(r => [r.id, r]));
         
+        // Attach provider to PPI if missing
+        ppi.forEach(p => {
+            if (!p.provider) {
+                p.provider = getProviderFromModelName(p.model, state.cache[split].modelProviders);
+            }
+        });
+
         state.cache[split].ppi = ppi;
         
         // Identify all judges for this split
@@ -1260,67 +1364,102 @@ function renderRiddleDetail(riddleId) {
         p.style.color = 'var(--text-muted)';
         container.appendChild(p);
     } else {
-        predictions.forEach(pred => {
-            const card = document.createElement('div');
-            card.className = 'riddle-content';
-            card.style.borderColor = 'var(--border-color)';
-            
-            // Model Name
-            const modelHeader = document.createElement('h4');
-            modelHeader.textContent = pred.model;
-            modelHeader.style.color = PROVIDER_COLORS[pred.provider] || 'var(--text-header)';
-            modelHeader.style.marginBottom = '0.5rem';
-            card.appendChild(modelHeader);
+        // Sort predictions by model name
+        predictions.sort((a, b) => a.model.localeCompare(b.model));
 
-            // Answer
-            const ansDiv = document.createElement('div');
-            ansDiv.style.marginBottom = '1rem';
-            // ansDiv.innerHTML = `<strong>Answer:</strong> ${pred.answer}`; // OLD
-            ansDiv.innerHTML = `
-                <strong style="display:block; margin-bottom:0.25rem; color:var(--text-muted);">Answer:</strong>
-                <div class="markdown-content">${marked.parse(pred.answer || '')}</div>
-            `;
-            card.appendChild(ansDiv);
+        // Create Selector Container
+        const selectorContainer = document.createElement('div');
+        container.appendChild(selectorContainer);
 
-            // Justification
-            if (pred.justification) {
-                const justDiv = document.createElement('details');
-                justDiv.style.marginBottom = '1rem';
-                justDiv.innerHTML = `
-                    <summary style="cursor:pointer; color:var(--text-muted)">Show Justification</summary>
-                    <div style="margin-top:0.5rem; color: var(--text-main)" class="markdown-content">
-                        ${marked.parse(pred.justification || '')}
-                    </div>
-                `;
-                card.appendChild(justDiv);
+        // Create Card Container
+        const cardContainer = document.createElement('div');
+        container.appendChild(cardContainer);
+
+        // Prepare options
+        const options = predictions.map(p => ({
+            value: p.model,
+            label: p.model,
+            provider: p.provider
+        }));
+
+        // Initial render
+        const initialModel = predictions[0].model;
+        
+        const renderSelectedCard = (modelName) => {
+            const pred = predictions.find(p => p.model === modelName);
+            cardContainer.innerHTML = '';
+            if (pred) {
+                cardContainer.appendChild(renderPredictionCard(pred, splitData));
             }
+        };
 
-            // Judges
-            const scorecard = document.createElement('div');
-            scorecard.className = 'judge-scorecard';
-            
-            // Also Human
-            if (pred.human_both_correct !== null) {
-                scorecard.appendChild(createJudgeCard('Human', pred.human_answer_correct, pred.human_justification_correct, pred.human_both_correct));
-            }
-
-            // Regex to find judge names from keys
-            const judgeKeys = Object.keys(pred).filter(k => k.startsWith('both_correct_'));
-
-            judgeKeys.forEach(key => {
-                const judgeName = key.replace('both_correct_', '');
-                // Check if this judge is active (non-null)
-                if (pred[key] !== null) {
-                    const ansKey = `is_answer_correct_${judgeName}`;
-                    const justKey = `is_justification_correct_${judgeName}`;
-                    scorecard.appendChild(createJudgeCard(judgeName, pred[ansKey], pred[justKey], pred[key]));
-                }
-            });
-
-            card.appendChild(scorecard);
-            container.appendChild(card);
+        new SearchableSelect(selectorContainer, options, initialModel, (val) => {
+            renderSelectedCard(val);
         });
+
+        // Initial card
+        renderSelectedCard(initialModel);
     }
+}
+
+function renderPredictionCard(pred, splitData) {
+    const card = document.createElement('div');
+    card.className = 'riddle-content';
+    card.style.borderColor = 'var(--border-color)';
+    
+    // Model Name
+    const modelHeader = document.createElement('h4');
+    modelHeader.textContent = pred.model;
+    modelHeader.style.color = PROVIDER_COLORS[pred.provider] || 'var(--text-header)';
+    modelHeader.style.marginBottom = '0.5rem';
+    card.appendChild(modelHeader);
+
+    // Answer
+    const ansDiv = document.createElement('div');
+    ansDiv.style.marginBottom = '1rem';
+    ansDiv.innerHTML = `
+        <strong style="display:block; margin-bottom:0.25rem; color:var(--text-muted);">Answer:</strong>
+        <div class="markdown-content">${marked.parse(pred.answer || '')}</div>
+    `;
+    card.appendChild(ansDiv);
+
+    // Justification
+    if (pred.justification) {
+        const justDiv = document.createElement('details');
+        justDiv.style.marginBottom = '1rem';
+        justDiv.innerHTML = `
+            <summary style="cursor:pointer; color:var(--text-muted)">Show Justification</summary>
+            <div style="margin-top:0.5rem; color: var(--text-main)" class="markdown-content">
+                ${marked.parse(pred.justification || '')}
+            </div>
+        `;
+        card.appendChild(justDiv);
+    }
+
+    // Judges
+    const scorecard = document.createElement('div');
+    scorecard.className = 'judge-scorecard';
+    
+    // Also Human
+    if (pred.human_both_correct !== null) {
+        scorecard.appendChild(createJudgeCard('Human', pred.human_answer_correct, pred.human_justification_correct, pred.human_both_correct));
+    }
+
+    // Regex to find judge names from keys
+    const judgeKeys = Object.keys(pred).filter(k => k.startsWith('both_correct_'));
+
+    judgeKeys.forEach(key => {
+        const judgeName = key.replace('both_correct_', '');
+        // Check if this judge is active (non-null)
+        if (pred[key] !== null) {
+            const ansKey = `is_answer_correct_${judgeName}`;
+            const justKey = `is_justification_correct_${judgeName}`;
+            scorecard.appendChild(createJudgeCard(judgeName, pred[ansKey], pred[justKey], pred[key]));
+        }
+    });
+
+    card.appendChild(scorecard);
+    return card;
 }
 
 function createJudgeCard(name, ans, just, both) {
