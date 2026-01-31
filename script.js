@@ -34,12 +34,14 @@ const state = {
     selectedRiddleId: null,
     filters: {
         categories: new Set(['all']),
-        picarats: new Set(['all'])
+        picarats: new Set(['all']),
+        successRates: new Set(['all'])
     }
 };
 
 let categorySelect = null;
 let picaratsSelect = null;
+let successRateSelect = null;
 
 // DOM Elements
 const elements = {
@@ -249,6 +251,11 @@ function initEventListeners() {
     
     picaratsSelect = new MultiSelect('picarats-filter-container', 'Picarats', (selected) => {
         state.filters.picarats = new Set(selected);
+        filterRiddleGrid();
+    });
+
+    successRateSelect = new MultiSelect('success-filter-container', 'Success Rates', (selected) => {
+        state.filters.successRates = new Set(selected);
         filterRiddleGrid();
     });
 
@@ -628,6 +635,16 @@ function renderRankChart(data) {
 function populateFilters(riddles) {
     const categories = new Set();
     const picarats = new Set();
+    
+    // We'll define fixed buckets for success rate
+    const successBuckets = [
+        { value: 'very_high', label: 'Very High (80-100%)', min: 80 },
+        { value: 'high', label: 'High (60-80%)', min: 60 },
+        { value: 'medium', label: 'Medium (40-60%)', min: 40 },
+        { value: 'low', label: 'Low (20-40%)', min: 20 },
+        { value: 'very_low', label: 'Very Low (0-20%)', min: 0 },
+        { value: 'unknown', label: 'Unknown', min: -1 }
+    ];
 
     riddles.forEach(r => {
         if (r.category) categories.add(r.category);
@@ -651,6 +668,65 @@ function populateFilters(riddles) {
         }));
         picaratsSelect.setOptions(picOptions);
     }
+
+    // Populate Success Rate
+    if (successRateSelect) {
+        successRateSelect.setOptions(successBuckets);
+    }
+}
+
+function calculateRiddleStats(riddles, ppi) {
+    if (!ppi) return;
+    
+    const predictionsByRiddle = new Map();
+    ppi.forEach(p => {
+        if (!predictionsByRiddle.has(p.riddle_id)) {
+            predictionsByRiddle.set(p.riddle_id, []);
+        }
+        predictionsByRiddle.get(p.riddle_id).push(p);
+    });
+
+    riddles.forEach(r => {
+        const preds = predictionsByRiddle.get(r.id) || [];
+        if (preds.length === 0) {
+            r.successRate = null;
+            return;
+        }
+
+        let totalScore = 0;
+        let validPreds = 0;
+
+        preds.forEach(p => {
+            let judgeScoreSum = 0;
+            let judgeCount = 0;
+
+            // Prioritize human judge if exists
+            if (p.human_both_correct !== null && p.human_both_correct !== undefined) {
+                totalScore += p.human_both_correct ? 1 : 0;
+                validPreds++;
+                return; 
+            }
+
+            // Otherwise average available automated judges
+            Object.keys(p).forEach(k => {
+                if (k.startsWith('both_correct_') && p[k] !== null) {
+                    judgeScoreSum += p[k] ? 1 : 0;
+                    judgeCount++;
+                }
+            });
+
+            if (judgeCount > 0) {
+                totalScore += judgeScoreSum / judgeCount;
+                validPreds++;
+            }
+        });
+
+        if (validPreds > 0) {
+            r.successRate = (totalScore / validPreds) * 100;
+        } else {
+            r.successRate = null;
+        }
+    });
 }
 
 function populateRiddleList() {
@@ -675,6 +751,9 @@ function populateRiddleList() {
         .filter(r => r.split === state.currentSplit)
         .sort((a, b) => a.id.localeCompare(b.id));
 
+    // Calculate Stats
+    calculateRiddleStats(riddles, splitData.ppi);
+
     populateFilters(riddles);
 
     riddles.forEach(r => {
@@ -692,6 +771,9 @@ function createRiddleCard(riddle) {
     card.dataset.id = riddle.id;
     card.dataset.category = riddle.category || 'Unknown';
     card.dataset.picarats = riddle.picarats !== undefined ? riddle.picarats : 'Unknown';
+    
+    // Dataset for success rate
+    card.dataset.successRate = riddle.successRate !== null ? riddle.successRate : -1;
 
     // Combine all textual fields for search
     const searchTerms = [
@@ -731,9 +813,24 @@ function createRiddleCard(riddle) {
         ? '?' 
         : riddle.picarats;
 
+    // Format Success Rate
+    let successBadge = '';
+    if (riddle.successRate !== null && riddle.successRate !== undefined) {
+        const rate = Math.round(riddle.successRate);
+        let colorClass = 'rate-medium';
+        if (rate >= 80) colorClass = 'rate-very-high';
+        else if (rate >= 60) colorClass = 'rate-high';
+        else if (rate >= 40) colorClass = 'rate-medium';
+        else if (rate >= 20) colorClass = 'rate-low';
+        else colorClass = 'rate-very-low';
+        
+        successBadge = `<span class="badge badge-success ${colorClass}">${rate}% Good</span>`;
+    }
+
     meta.innerHTML = `
         <span class="badge badge-category">${riddle.category || 'Unknown'}</span>
         <span class="badge">${picaratsDisplay} Picarats</span>
+        ${successBadge}
     `;
     card.appendChild(meta);
 
@@ -760,6 +857,7 @@ function filterRiddleGrid() {
     const query = elements.riddleSearch.value.toLowerCase();
     const selectedCats = state.filters.categories;
     const selectedPics = state.filters.picarats;
+    const selectedRates = state.filters.successRates;
 
     const cards = elements.riddleGrid.getElementsByClassName('riddle-card');
     
@@ -768,11 +866,23 @@ function filterRiddleGrid() {
         
         const cat = card.dataset.category;
         const pic = card.dataset.picarats; // String
+        const rate = parseFloat(card.dataset.successRate);
         
         const matchesCat = selectedCats.has('all') || selectedCats.has(cat);
         const matchesPic = selectedPics.has('all') || selectedPics.has(pic);
         
-        card.style.display = (matchesSearch && matchesCat && matchesPic) ? 'flex' : 'none';
+        let matchesRate = selectedRates.has('all');
+        if (!matchesRate) {
+            // Check against selected buckets
+            if (selectedRates.has('unknown') && rate === -1) matchesRate = true;
+            if (selectedRates.has('very_high') && rate >= 80) matchesRate = true;
+            if (selectedRates.has('high') && rate >= 60 && rate < 80) matchesRate = true;
+            if (selectedRates.has('medium') && rate >= 40 && rate < 60) matchesRate = true;
+            if (selectedRates.has('low') && rate >= 20 && rate < 40) matchesRate = true;
+            if (selectedRates.has('very_low') && rate >= 0 && rate < 20) matchesRate = true;
+        }
+        
+        card.style.display = (matchesSearch && matchesCat && matchesPic && matchesRate) ? 'flex' : 'none';
     }
 }
 
