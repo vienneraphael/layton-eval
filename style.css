@@ -19,6 +19,32 @@
     padding: 0;
 }
 
+/* Custom Scrollbar - Global */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-body);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+    border: 2px solid var(--bg-body);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Firefox support */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-body);
+}
+
 body {
     font-family: var(--font-family);
     background-color: var(--bg-body);
@@ -180,6 +206,7 @@ select {
     display: none;
     height: 100%;
     overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 #analytics.tab-pane {
@@ -418,23 +445,7 @@ svg {
     padding-right: 0.5rem;
 }
 
-/* Custom Scrollbar for Legend */
-.radar-legend::-webkit-scrollbar {
-    width: 6px;
-}
-
-.radar-legend::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.radar-legend::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 10px;
-}
-
-.radar-legend::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-}
+/* Custom Scrollbar for Legend removed in favor of global styles */
 
 .legend-item {
     display: flex;
@@ -791,15 +802,15 @@ svg {
 
 /* Modal */
 .modal {
-    display: none; 
-    position: fixed; 
-    z-index: 100; 
+    display: none;
+    position: fixed;
+    z-index: 100;
     left: 0;
     top: 0;
-    width: 100%; 
-    height: 100%; 
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.8); 
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.8);
     backdrop-filter: blur(4px);
     animation: fadeIn 0.2s ease-out;
 }
@@ -934,11 +945,11 @@ svg {
     margin-bottom: 1em;
 }
 
-.markdown-content h1, 
-.markdown-content h2, 
-.markdown-content h3, 
-.markdown-content h4, 
-.markdown-content h5, 
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
 .markdown-content h6 {
     margin-top: 1.5em;
     margin-bottom: 0.5em;
@@ -946,7 +957,7 @@ svg {
     font-weight: 600;
 }
 
-.markdown-content ul, 
+.markdown-content ul,
 .markdown-content ol {
     margin-bottom: 1em;
     padding-left: 1.5em;
@@ -1136,7 +1147,7 @@ svg {
 }
 
 /* Global Status Colors - ensuring these are never white */
-.status-check, 
+.status-check,
 .status-correct,
 span.status-check,
 span.status-correct {
@@ -1144,7 +1155,7 @@ span.status-correct {
     font-weight: 800 !important;
 }
 
-.status-cross, 
+.status-cross,
 .status-incorrect,
 span.status-cross,
 span.status-incorrect {
@@ -1476,7 +1487,7 @@ span.status-incorrect {
         grid-template-columns: 1fr;
         padding: 1.5rem;
     }
-    
+
     .radar-legend-wrapper {
         height: 300px;
         border-right: none;
@@ -1491,15 +1502,15 @@ span.status-incorrect {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     .mobile-hide {
         display: none;
     }
-    
+
     .visualizer-layout {
         flex-direction: column;
     }
-    
+
     .riddle-sidebar {
         width: 100%;
         height: 200px;
