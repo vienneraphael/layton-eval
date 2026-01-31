@@ -9,11 +9,6 @@ const SPLITS = {
         results: 'benchmark_results/results_vlm.jsonl',
         ppi: 'ppi/ppi_vlm.jsonl',
         metadata: 'datasets/layton_eval_vlm.jsonl'
-    },
-    full: {
-        results: 'benchmark_results/results_llm.jsonl', 
-        ppi: 'ppi/ppi_llm.jsonl', 
-        metadata: 'datasets/layton_eval.jsonl'
     }
 };
 
@@ -33,8 +28,7 @@ const state = {
     currentSplit: 'llm',
     cache: {
         llm: {},
-        vlm: {},
-        full: {}
+        vlm: {}
     },
     activeTab: 'leaderboard',
     selectedRiddleId: null,
@@ -678,7 +672,7 @@ function populateRiddleList() {
     // Convert to array, filter by valid IDs, and sort
     const riddles = Array.from(riddlesMap.values())
         .filter(r => validRiddleIds.has(r.id))
-        .filter(r => state.currentSplit === 'full' || r.split === state.currentSplit)
+        .filter(r => r.split === state.currentSplit)
         .sort((a, b) => a.id.localeCompare(b.id));
 
     populateFilters(riddles);
