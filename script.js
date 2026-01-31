@@ -239,8 +239,10 @@ class SearchableSelect {
     constructor(container, options, initialValue, onSelect) {
         this.container = container;
         this.options = options; // [{value, label, provider}]
+        this.filteredOptions = options;
         this.onSelect = onSelect;
         this.selectedValue = initialValue;
+        this.highlightedIndex = -1;
         this.isOpen = false;
         
         this.render();
@@ -277,14 +279,43 @@ class SearchableSelect {
         this.searchInput.onclick = (e) => e.stopPropagation();
         this.searchInput.oninput = () => {
             const query = this.searchInput.value.toLowerCase();
-            const filtered = this.options.filter(o => 
+            this.filteredOptions = this.options.filter(o => 
                 o.label.toLowerCase().includes(query) || 
                 (o.provider && o.provider.toLowerCase().includes(query))
             );
-            this.renderOptions(filtered);
+            this.highlightedIndex = this.filteredOptions.length > 0 ? 0 : -1;
+            this.renderOptions(this.filteredOptions);
+        };
+
+        this.searchInput.onkeydown = (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredOptions.length;
+                this.renderOptions(this.filteredOptions);
+                this.scrollToHighlighted();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.highlightedIndex = (this.highlightedIndex - 1 + this.filteredOptions.length) % this.filteredOptions.length;
+                this.renderOptions(this.filteredOptions);
+                this.scrollToHighlighted();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (this.highlightedIndex >= 0 && this.highlightedIndex < this.filteredOptions.length) {
+                    this.select(this.filteredOptions[this.highlightedIndex].value);
+                }
+            } else if (e.key === 'Escape') {
+                this.close();
+            }
         };
 
         document.addEventListener('click', () => this.close());
+    }
+
+    scrollToHighlighted() {
+        const highlightedEl = this.optionsList.querySelector('.model-option.highlighted');
+        if (highlightedEl) {
+            highlightedEl.scrollIntoView({ block: 'nearest' });
+        }
     }
 
     updateTriggerText() {
@@ -298,9 +329,11 @@ class SearchableSelect {
 
     renderOptions(options) {
         this.optionsList.innerHTML = '';
-        options.forEach(opt => {
+        options.forEach((opt, index) => {
             const div = document.createElement('div');
-            div.className = `model-option ${opt.value === this.selectedValue ? 'selected' : ''}`;
+            const isSelected = opt.value === this.selectedValue;
+            const isHighlighted = index === this.highlightedIndex;
+            div.className = `model-option ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}`;
             div.innerHTML = `<span class="provider-prefix">${opt.provider}:</span> ${opt.label}`;
             div.onclick = (e) => {
                 e.stopPropagation();
@@ -314,7 +347,16 @@ class SearchableSelect {
         this.isOpen = !this.isOpen;
         this.dropdown.classList.toggle('show', this.isOpen);
         if (this.isOpen) {
+            this.searchInput.value = '';
+            this.filteredOptions = this.options;
+            // Set highlighted to current selection if it exists in filtered options
+            this.highlightedIndex = this.filteredOptions.findIndex(o => o.value === this.selectedValue);
+            if (this.highlightedIndex === -1 && this.filteredOptions.length > 0) {
+                this.highlightedIndex = 0;
+            }
+            this.renderOptions(this.filteredOptions);
             this.searchInput.focus();
+            setTimeout(() => this.scrollToHighlighted(), 0);
         }
     }
 
@@ -326,7 +368,6 @@ class SearchableSelect {
     select(value) {
         this.selectedValue = value;
         this.updateTriggerText();
-        this.renderOptions(this.options);
         this.close();
         if (this.onSelect) this.onSelect(value);
     }

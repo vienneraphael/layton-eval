@@ -867,7 +867,7 @@ span.status-incorrect {
     color: var(--text-main);
 }
 
-.model-option:hover {
+.model-option:hover, .model-option.highlighted {
     background-color: var(--bg-surface-hover);
     color: var(--text-header);
 }
