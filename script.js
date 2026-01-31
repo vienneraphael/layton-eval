@@ -1,14 +1,14 @@
 // Constants
 const SPLITS = {
     llm: {
-        results: 'results_llm.jsonl',
-        ppi: 'ppi_llm.jsonl',
-        metadata: 'datasets/layton_eval.jsonl'
+        results: 'benchmark_results/results_llm.jsonl',
+        ppi: 'ppi/ppi_llm.jsonl',
+        metadata: 'datasets/layton_eval_llm.jsonl'
     },
     vlm: {
-        results: 'results_vlm.jsonl',
-        ppi: 'ppi_vlm.jsonl',
-        metadata: 'datasets/layton_eval.jsonl'
+        results: 'benchmark_results/results_vlm.jsonl',
+        ppi: 'ppi/ppi_vlm.jsonl',
+        metadata: 'datasets/layton_eval_vlm.jsonl'
     },
     full: {
         results: 'results.jsonl', // Assuming this exists or we fallback
