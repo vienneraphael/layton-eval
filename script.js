@@ -82,7 +82,6 @@ let successRateSelect = null;
 function getModelColor(modelName, provider, index, total) {
     const baseColor = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
     
-    // Convert hex to HSL to vary the lightness/saturation slightly for uniqueness
     const hexToRgb = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
@@ -114,12 +113,18 @@ function getModelColor(modelName, provider, index, total) {
     const rgb = hexToRgb(baseColor);
     const [h, s, l] = rgbToHsl(rgb.r, rgb.g, rgb.b);
     
-    // Vary hue slightly (±15 degrees) and lightness (±10%) based on index
-    // This keeps them visually close to provider but distinct
-    const hueOffset = ((index % 5) - 2) * 6; 
-    const lightnessOffset = ((index % 3) - 1) * 8;
+    // Create a wide spread of lightness (20% to 85%) specifically for this provider's models
+    let finalLightness;
+    if (total <= 1) {
+        finalLightness = l; // Keep original if only one model
+    } else {
+        // Linear spread between 25% and 85%
+        const minL = 25;
+        const maxL = 85;
+        finalLightness = minL + (index / (total - 1)) * (maxL - minL);
+    }
     
-    return `hsl(${h + hueOffset}, ${Math.min(100, s + 5)}%, ${Math.max(30, Math.min(80, l + lightnessOffset))}%)`;
+    return `hsl(${h}, ${Math.min(100, s + 15)}%, ${finalLightness}%)`;
 }
 
 // DOM Elements
@@ -1154,14 +1159,23 @@ function renderAnalytics() {
     // Draw models
     const polygons = [];
     const legendItems = [];
+    const providerModelCounts = {}; // Track how many models we've seen per provider
 
     modelsToDisplay.forEach((modelName) => {
         const stats = allModelsStats[modelName];
         if (!stats) return;
 
-        const provider = splitData.modelProviders.get(modelName);
-        const globalIdx = sortedModels.indexOf(modelName);
-        const color = getModelColor(modelName, provider, globalIdx, sortedModels.length);
+        const provider = splitData.modelProviders.get(modelName) || 'default';
+        if (!providerModelCounts[provider]) providerModelCounts[provider] = 0;
+        
+        // Get number of total models for this provider to calculate step
+        const modelsOfThisProvider = modelsToDisplay.filter(m => splitData.modelProviders.get(m) === provider).length;
+        const providerIdx = providerModelCounts[provider];
+        providerModelCounts[provider]++;
+
+        // Calculate a unique lightness for this model within its provider group
+        // Spread from 20% to 85% lightness
+        const color = getModelColor(modelName, provider, providerIdx, modelsOfThisProvider);
         const isDisabled = state.filters.disabledAnalyticsModels.has(modelName);
 
         const points = sortedCategories.map((cat, i) => {
@@ -1247,9 +1261,6 @@ function renderAnalytics() {
         legendItem.onmouseenter = highlight;
         legendItem.onmouseleave = reset;
         legendItem.onclick = toggle;
-        
-        polygon.onmouseenter = highlight;
-        polygon.onmouseleave = reset;
         
         elements.radarLegend.appendChild(legendItem);
         legendItems.push(legendItem);

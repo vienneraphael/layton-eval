@@ -543,12 +543,7 @@ svg {
     fill-opacity: 0.08;
     stroke-width: 2;
     transition: fill-opacity 0.3s, stroke-width 0.3s, opacity 0.3s;
-}
-
-.radar-area:hover {
-    fill-opacity: 0.5;
-    stroke-width: 4;
-    cursor: pointer;
+    pointer-events: none;
 }
 
 .radar-area.highlighted {
