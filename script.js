@@ -1052,7 +1052,7 @@ function renderAnalytics() {
         const text = document.createElementNS(svgNS, "text");
         text.setAttribute("x", center + 5);
         text.setAttribute("y", center - (radius * level) - 5);
-        text.setAttribute("font-size", "11px");
+        text.setAttribute("font-size", "14px");
         text.setAttribute("fill", "var(--text-muted)");
         text.setAttribute("font-weight", "600");
         text.textContent = `${Math.round(level * 100)}%`;
@@ -1073,17 +1073,30 @@ function renderAnalytics() {
         axis.setAttribute("class", "radar-axis");
         svg.appendChild(axis);
 
-        const labelDist = radius + 45;
+        const labelDist = radius + 70;
         const lx = center + Math.cos(angle) * labelDist;
         const ly = center + Math.sin(angle) * labelDist;
         
+        const words = cat.split(/\s+/);
         const text = document.createElementNS(svgNS, "text");
         text.setAttribute("x", lx);
         text.setAttribute("y", ly);
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("dominant-baseline", "middle");
         text.setAttribute("class", "radar-label");
-        text.textContent = cat;
+
+        // Center vertically based on number of lines
+        const lineHeight = 22; 
+        const totalHeight = (words.length - 1) * lineHeight;
+        const startOffset = -totalHeight / 2;
+
+        words.forEach((word, index) => {
+            const tspan = document.createElementNS(svgNS, "tspan");
+            tspan.setAttribute("x", lx);
+            tspan.setAttribute("dy", index === 0 ? `${startOffset}px` : `${lineHeight}px`);
+            tspan.textContent = word;
+            text.appendChild(tspan);
+        });
         svg.appendChild(text);
     });
 
