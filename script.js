@@ -1014,6 +1014,7 @@ function renderAnalytics() {
     // 1. Identify all models and their stats
     const allModelsStats = {}; 
     const categories = new Set();
+    const riddlesByCategory = {}; // New: Track unique riddle IDs per category
     
     ppi.forEach(p => {
         const riddle = riddlesMap.get(p.riddle_id);
@@ -1043,6 +1044,9 @@ function renderAnalytics() {
         if (valid) {
             const cat = riddle.category || 'Unknown';
             categories.add(cat);
+            
+            if (!riddlesByCategory[cat]) riddlesByCategory[cat] = new Set();
+            riddlesByCategory[cat].add(p.riddle_id);
 
             if (!allModelsStats[p.model]) allModelsStats[p.model] = {};
             if (!allModelsStats[p.model][cat]) allModelsStats[p.model][cat] = { total: 0, count: 0 };
@@ -1295,7 +1299,7 @@ function renderAnalytics() {
     // 1. Populate Analytics Category Selector
     const catOptions = sortedCategories.map(cat => ({
         value: cat,
-        label: cat
+        label: `${cat} (${riddlesByCategory[cat] ? riddlesByCategory[cat].size : 0})`
     }));
 
     if (!state.filters.selectedAnalyticsCategory || !sortedCategories.includes(state.filters.selectedAnalyticsCategory)) {
@@ -1444,6 +1448,7 @@ function renderRadarChart(container, stats, labels, provider) {
 function populateFilters(riddles) {
     const categories = new Set();
     const picarats = new Set();
+    const riddlesByCategory = {}; // Count for label display
     
     // We'll define fixed buckets for success rate
     const successBuckets = [
@@ -1456,7 +1461,10 @@ function populateFilters(riddles) {
     ];
 
     riddles.forEach(r => {
-        if (r.category) categories.add(r.category);
+        if (r.category) {
+            categories.add(r.category);
+            riddlesByCategory[r.category] = (riddlesByCategory[r.category] || 0) + 1;
+        }
         if (r.picarats !== undefined && r.picarats !== null) picarats.add(r.picarats);
     });
 
@@ -1464,7 +1472,7 @@ function populateFilters(riddles) {
     if (categorySelect) {
         const catOptions = Array.from(categories).sort().map(cat => ({
             value: cat,
-            label: cat
+            label: `${cat} (${riddlesByCategory[cat]})`
         }));
         categorySelect.setOptions(catOptions);
     }

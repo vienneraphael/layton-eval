@@ -608,7 +608,7 @@ svg {
 /* Category Analysis Section */
 .category-analysis-container {
     margin-top: 4rem;
-    padding: 2rem;
+    padding: 2rem 2rem 1.25rem 2rem; /* Reduced bottom padding */
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -636,7 +636,7 @@ svg {
 
 .category-bar-plot-container {
     width: 100%;
-    min-height: 400px;
+    min-height: 200px; /* Reduced from 400px to avoid empty space with fewer models */
 }
 
 .category-bar-group {
