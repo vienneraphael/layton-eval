@@ -742,6 +742,11 @@ function renderLeaderboard() {
         }
         tr.appendChild(tdModel);
 
+        // Hints
+        const tdHints = document.createElement('td');
+        tdHints.textContent = row.n_hints !== undefined ? row.n_hints : '0';
+        tr.appendChild(tdHints);
+
         // Score
         const tdScore = document.createElement('td');
         tdScore.textContent = row.score.toFixed(1);
