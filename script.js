@@ -977,9 +977,9 @@ function renderRankChart(data) {
     svg.appendChild(xAxisLabel);
 
     // Add info icon next to axis label (smaller, positioned above and to the right)
-    const iconOffset = isMobile ? 35 : 48;
+    const iconOffset = isMobile ? 42 : 48; // User requested slightly further right from 38
     const infoIconX = padding.left + chartWidth / 2 + iconOffset;
-    const infoIconY = height - (isMobile ? 14 : 22);
+    const infoIconY = height - (isMobile ? 18 : 22);
     const tooltipText = "Model score is a 95%-CI estimation of the % of correct answers a human annotator would have attributed to the model. Answer correctness is based on both answer and justification.";
     
     const infoGroup = document.createElementNS(svgNS, "g");
@@ -991,19 +991,30 @@ function renderRankChart(data) {
     const infoCircle = document.createElementNS(svgNS, "circle");
     infoCircle.setAttribute("cx", infoIconX);
     infoCircle.setAttribute("cy", infoIconY);
-    infoCircle.setAttribute("r", isMobile ? "4" : "5");
+    infoCircle.setAttribute("r", isMobile ? "6.5" : "5"); // Reduced size from 9
     infoCircle.setAttribute("fill", "#4b5563");
     infoCircle.setAttribute("stroke", "#6b7280");
     infoCircle.setAttribute("stroke-width", "1");
     infoGroup.appendChild(infoCircle);
     
+    // Transparent overlay for even better mobile tapping (keep this large!)
+    if (isMobile) {
+        const tapTarget = document.createElementNS(svgNS, "circle");
+        tapTarget.setAttribute("cx", infoIconX);
+        tapTarget.setAttribute("cy", infoIconY);
+        tapTarget.setAttribute("r", "20");
+        tapTarget.setAttribute("fill", "transparent");
+        tapTarget.setAttribute("pointer-events", "all");
+        infoGroup.appendChild(tapTarget);
+    }
+
     // "i" text
     const infoText = document.createElementNS(svgNS, "text");
     infoText.setAttribute("x", infoIconX);
-    infoText.setAttribute("y", infoIconY + (isMobile ? 2 : 2.5));
+    infoText.setAttribute("y", infoIconY + (isMobile ? 2.5 : 2.5));
     infoText.setAttribute("text-anchor", "middle");
     infoText.setAttribute("fill", "#e5e7eb");
-    infoText.setAttribute("font-size", isMobile ? "6px" : "7px");
+    infoText.setAttribute("font-size", isMobile ? "8px" : "7px"); // Reduced from 10px
     infoText.setAttribute("font-weight", "700");
     infoText.setAttribute("font-style", "italic");
     infoText.setAttribute("font-family", "serif");
@@ -1022,20 +1033,28 @@ function renderRankChart(data) {
     }
     
     const showTooltip = (e) => {
+        if (e) e.preventDefault();
         infoCircle.setAttribute("fill", "#2563eb");
         infoCircle.setAttribute("stroke", "#2563eb");
         infoText.setAttribute("fill", "#ffffff");
         
-        // Position and show tooltip
-        const rect = infoGroup.getBoundingClientRect();
-        const tooltipGap = isMobile ? 18 : 12; // More gap on mobile
+        // Position and show tooltip relative to both text and icon
+        const iconRect = infoGroup.getBoundingClientRect();
+        const textRect = xAxisLabel.getBoundingClientRect();
         
-        let left = rect.left + rect.width / 2;
+        const combinedLeft = textRect.left;
+        const combinedRight = iconRect.right;
+        const combinedWidth = combinedRight - combinedLeft;
+        
+        // Use a much larger gap on mobile and ensure it's calculated correctly
+        const gap = isMobile ? 120 : 15; // Slightly reduced from 150 to 120 as 150 might be too much
+        
+        let left = combinedLeft + combinedWidth / 2;
         const screenWidth = window.innerWidth;
-        const tooltipWidth = isMobile ? 260 : 280;
+        const tooltipWidth = isMobile ? 140 : 280;
         const padding = 10;
 
-        // Boundary checks
+        // Boundary checks for horizontal positioning
         if (left - tooltipWidth/2 < padding) {
             left = tooltipWidth/2 + padding;
         } else if (left + tooltipWidth/2 > screenWidth - padding) {
@@ -1043,41 +1062,52 @@ function renderRankChart(data) {
         }
 
         axisTooltip.style.left = left + 'px';
-        axisTooltip.style.top = (rect.top - tooltipGap) + 'px';
+        // Force the top position to be relative to the viewport top
+        const topPos = Math.min(iconRect.top, textRect.top) - gap;
+        axisTooltip.style.top = topPos + 'px';
         axisTooltip.style.display = 'block';
+        
+        // On mobile, ensure it doesn't have transform that might be messing up the 'top' setting
+        if (isMobile) {
+            axisTooltip.style.transform = 'translateX(-50%)';
+        } else {
+            axisTooltip.style.transform = 'translateX(-50%) translateY(-100%)';
+        }
+
         if (e) e.stopPropagation();
     };
 
-    const hideTooltip = () => {
+    const hideTooltip = (e) => {
         infoCircle.setAttribute("fill", "#4b5563");
         infoCircle.setAttribute("stroke", "#6b7280");
         infoText.setAttribute("fill", "#e5e7eb");
         axisTooltip.style.display = 'none';
+        if (e) e.stopPropagation();
     };
 
-    // Hover effect with tooltip
+    // Hover effect with tooltip (mostly for desktop)
     infoGroup.addEventListener("mouseenter", showTooltip);
     infoGroup.addEventListener("mouseleave", hideTooltip);
-    
-    // Axis label interaction
     xAxisLabel.addEventListener("mouseenter", showTooltip);
     xAxisLabel.addEventListener("mouseleave", hideTooltip);
 
-    // Mobile/Click interaction
-    infoGroup.addEventListener("click", (e) => {
+    // Mobile/Click interaction - use a single robust handler
+    const toggleTooltip = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (axisTooltip.style.display === 'block') {
-            hideTooltip();
+            hideTooltip(e);
         } else {
             showTooltip(e);
         }
-    });
-    xAxisLabel.addEventListener("click", (e) => {
-        if (axisTooltip.style.display === 'block') {
-            hideTooltip();
-        } else {
-            showTooltip(e);
-        }
-    });
+    };
+
+    infoGroup.addEventListener("click", toggleTooltip);
+    xAxisLabel.addEventListener("click", toggleTooltip);
+    
+    // Support touch specifically to avoid hover/click issues
+    infoGroup.addEventListener("touchstart", toggleTooltip, { passive: false });
+    xAxisLabel.addEventListener("touchstart", toggleTooltip, { passive: false });
     
     // Hide when clicking elsewhere
     document.addEventListener("click", (e) => {
@@ -1257,10 +1287,11 @@ function renderAnalytics() {
                 }
                 tooltip.textContent = definition;
                 const rect = text.getBoundingClientRect();
+                const gap = isMobile ? 120 : 15;
                 
                 let left = rect.left + rect.width / 2;
                 const screenWidth = window.innerWidth;
-                const tooltipWidth = isMobile ? 260 : 280;
+                const tooltipWidth = isMobile ? 140 : 280;
                 const padding = 10;
 
                 // Boundary checks
@@ -1271,8 +1302,15 @@ function renderAnalytics() {
                 }
 
                 tooltip.style.left = left + 'px';
-                tooltip.style.top = (rect.top - 10) + 'px';
+                tooltip.style.top = (rect.top - gap) + 'px';
                 tooltip.style.display = 'block';
+                
+                if (isMobile) {
+                    tooltip.style.transform = 'translateX(-50%)';
+                } else {
+                    tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
+                }
+                
                 text.style.fill = 'var(--primary)';
             });
             text.addEventListener('mouseleave', () => {
