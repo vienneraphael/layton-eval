@@ -1,7 +1,9 @@
-{"rank":1,"rank_spread":"1 <--> 2","model":"gemini-3-flash-preview","score":46.4,"95% CI (±)":1.9,"provider":"gemini"}
-{"rank":2,"rank_spread":"1 <--> 2","model":"gemini-3-pro-preview","score":46.1,"95% CI (±)":1.9,"provider":"gemini"}
-{"rank":3,"rank_spread":"3 <--> 4","model":"gpt-5-2","score":33.3,"95% CI (±)":1.8,"provider":"openai"}
-{"rank":4,"rank_spread":"3 <--> 4","model":"gpt-5-1","score":32.3,"95% CI (±)":2.1,"provider":"openai"}
-{"rank":5,"rank_spread":"5 <--> 6","model":"claude-opus-4-5_thinking_32k","score":25.1,"95% CI (±)":1.8,"provider":"anthropic"}
-{"rank":6,"rank_spread":"5 <--> 6","model":"claude-opus-4-5","score":23.0,"95% CI (±)":1.9,"provider":"anthropic"}
-{"rank":7,"rank_spread":"7 <--> 7","model":"mistral-large-2512","score":12.3,"95% CI (±)":1.3,"provider":"mistral"}
+{"rank":1,"rank_spread":"1 <--> 2","model":"gemini-3-flash-high","score":46.4,"95% CI (±)":1.9,"provider":"gemini"}
+{"rank":2,"rank_spread":"1 <--> 2","model":"gemini-3-pro-high","score":46.1,"95% CI (±)":1.9,"provider":"gemini"}
+{"rank":3,"rank_spread":"3 <--> 4","model":"gpt-5.2-2025-12-11-high","score":33.4,"95% CI (±)":1.9,"provider":"openai"}
+{"rank":4,"rank_spread":"3 <--> 5","model":"gpt-5.1-2025-11-13-high","score":32.3,"95% CI (±)":2.1,"provider":"openai"}
+{"rank":5,"rank_spread":"4 <--> 5","model":"moonshotai-kimi-k2.5-thinking","score":28.9,"95% CI (±)":1.8,"provider":"together"}
+{"rank":6,"rank_spread":"6 <--> 7","model":"claude-opus-4-5-20251101-thinking-32k","score":25.1,"95% CI (±)":1.8,"provider":"anthropic"}
+{"rank":7,"rank_spread":"6 <--> 7","model":"claude-opus-4-5-20251101-no-thinking","score":23.0,"95% CI (±)":1.9,"provider":"anthropic"}
+{"rank":8,"rank_spread":"8 <--> 8","model":"mistral-large-2512","score":12.6,"95% CI (±)":1.3,"provider":"mistral"}
+{"rank":9,"rank_spread":"9 <--> 9","model":"qwen-qwen3-235b-a22b-instruct-2507-tput","score":9.3,"95% CI (±)":1.5,"provider":"together"}
