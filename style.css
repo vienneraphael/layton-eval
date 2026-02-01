@@ -634,6 +634,16 @@ svg {
     min-width: 300px;
 }
 
+.category-description {
+    margin-bottom: 2rem;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 800px;
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--border-color);
+}
+
 .category-bar-plot-container {
     width: 100%;
     min-height: 200px; /* Reduced from 400px to avoid empty space with fewer models */

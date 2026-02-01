@@ -1339,7 +1339,13 @@ function renderCategoryBarPlot() {
 
     const cat = state.filters.selectedAnalyticsCategory;
     const container = document.getElementById('category-bar-plot-container');
+    const descContainer = document.getElementById('category-description');
     if (!container || !cat) return;
+
+    // Update description
+    if (descContainer) {
+        descContainer.textContent = CATEGORY_DEFINITIONS[cat] || 'No description available for this category.';
+    }
 
     container.innerHTML = '';
 
