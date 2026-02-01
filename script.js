@@ -787,7 +787,7 @@ function renderRankChart(data) {
         top: 40,
         right: isMobile ? 20 : 60,
         bottom: isMobile ? 50 : 60,
-        left: isMobile ? 150 : 200 // Increased left padding on mobile for model names
+        left: isMobile ? 180 : 300 // Increased left padding for model names
     };
 
     // Detect Score Range (0-1 or 0-100)
@@ -955,10 +955,11 @@ function renderRankChart(data) {
         nameLabel.setAttribute("font-size", isMobile ? "10px" : "12px");
         nameLabel.setAttribute("font-weight", "500");
 
-        // Truncate model name on mobile if too long
+        // Truncate model name if too long
         let modelName = row.model;
-        if (isMobile && modelName.length > 25) {
-            modelName = modelName.substring(0, 22) + "...";
+        const maxLen = isMobile ? 28 : 45; // Increased to 45 for 300px padding
+        if (modelName.length > maxLen) {
+            modelName = modelName.substring(0, maxLen - 3) + "...";
         }
         nameLabel.textContent = modelName;
         g.appendChild(nameLabel);
@@ -1592,7 +1593,7 @@ function renderCategoryBarPlot() {
             modelName = modelName.substring(0, 27) + "...";
         }
 
-        const labelWidthDesktop = 250;
+        const labelWidthDesktop = 300;
         const styleAttr = isMobile ? '' : `style="width: ${labelWidthDesktop}px"`;
 
         barGroup.innerHTML = `
