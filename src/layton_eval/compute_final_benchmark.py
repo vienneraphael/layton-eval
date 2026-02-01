@@ -50,7 +50,7 @@ def get_benchmark_results(df_ppi: pl.DataFrame, field_name="both_correct") -> pl
     }
     for provider, model in df_ppi.select("provider", "model").unique().iter_rows():
         ppi_point_estimates = []
-        for _ in range(1000):
+        for _ in range(10_000):
             ppi_pointestimate = get_ppi_results(df_ppi, provider, model, field_name=field_name)
             ppi_point_estimates.append(ppi_pointestimate[0])
         ppi_ci_lower = np.percentile(ppi_point_estimates, 2.5)
