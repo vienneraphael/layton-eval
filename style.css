@@ -387,7 +387,51 @@ svg {
     }
 
     #leaderboard-table {
-        min-width: 500px; /* Force scroll on small screens */
+        min-width: 600px; /* Force scroll on small screens */
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    #leaderboard-table th:nth-child(2),
+    #leaderboard-table td:nth-child(2) {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: var(--bg-surface);
+        border-right: 1px solid var(--border-color);
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    #leaderboard-table th:nth-child(2) {
+        z-index: 11; /* Above other headers */
+        background-color: var(--bg-surface-hover);
+    }
+
+    /* Recap table in visualizer */
+    .recap-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .recap-table {
+        min-width: 500px;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .recap-table th:first-child,
+    .recap-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: var(--bg-surface);
+        border-right: 1px solid var(--border-color);
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .recap-table th:first-child {
+        z-index: 11;
+        background-color: var(--bg-surface-hover);
     }
 
     th, td {
@@ -1063,6 +1107,20 @@ svg {
     box-shadow: 0 4px 24px rgba(0,0,0,0.5);
 }
 
+.modal-header {
+    position: sticky;
+    top: -2rem; /* Adjusted for modal-content padding */
+    background-color: var(--bg-body);
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-top: -1rem; /* Bring it closer to top */
+}
+
 @media (max-width: 768px) {
     .modal-content {
         width: 95%;
@@ -1072,9 +1130,16 @@ svg {
         overflow-y: auto;
     }
 
+    .modal-header {
+        top: -1rem; /* Adjusted for mobile modal-content padding */
+        padding-bottom: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
     .riddle-title {
         font-size: 1.3rem;
-        padding-right: 2rem; /* Avoid overlap with close button */
+        padding-right: 0.5rem; 
+        margin-bottom: 0;
     }
 
     .riddle-meta {
@@ -1098,12 +1163,16 @@ svg {
 
 .close-modal {
     color: var(--text-muted);
-    float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
     line-height: 1;
     transition: color 0.2s;
+}
+
+.modal-header .close-modal {
+    margin-left: 1rem;
+    flex-shrink: 0;
 }
 
 .close-modal:hover,

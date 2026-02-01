@@ -153,6 +153,7 @@ const elements = {
     riddleSearch: document.getElementById('riddle-search'),
     modal: document.getElementById('riddle-modal'),
     modalBody: document.getElementById('modal-body'),
+    modalTitle: document.getElementById('modal-title'),
     closeModal: document.querySelector('.close-modal')
 };
 
@@ -827,6 +828,7 @@ function renderRankChart(data) {
     svg.style.display = "block";
     svg.style.width = width + "px"; // Ensure width is strictly applied
     svg.style.minWidth = width + "px"; // Ensure width is strictly applied
+    container.appendChild(svg);
 
     // X Scale function (Score)
     const xScale = (score) => {
@@ -1922,10 +1924,9 @@ function renderRiddleDetail(riddleId) {
     const modelCells = []; // Store cells to link them later
 
     // Header
-    const h2 = document.createElement('h2');
-    h2.textContent = getRiddleTitle(riddle);
-    h2.className = 'riddle-title';
-    container.appendChild(h2);
+    if (elements.modalTitle) {
+        elements.modalTitle.textContent = getRiddleTitle(riddle);
+    }
 
     // Meta
     const meta = document.createElement('div');
