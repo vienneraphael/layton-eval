@@ -149,9 +149,9 @@ Here's how it works:
 - For each bin, sample the same amount from the preprocessed `layton-eval-ppi` dataset, with replacement.
 We obtain a dataset with `n_riddles` samples and the same jury output distribution, PPI is computed on this dataset.
 
-This process is repeated 1000 times with a different sampling each time, leading to same-distribution, but different samples.
+This process is repeated 10,000 times with a different sampling each time, leading to same-distribution, but different samples.
 
-The 1000 PPIs point estimates are then used to compute a 95%-CI interval, using the 2.5 and 97.5 percentile of the PPI values distribution.
+The 10,000 PPIs point estimates are then used to compute a 95%-CI interval, using the 2.5 and 97.5 percentile of the PPI values distribution.
 The final score is the mid-value between those two percentiles, such that we can assess with 95% confidence that the model score is somewhere in the [score - CI, score + CI] interval.
 
 At this step, the obtained score represents the metric that anyone can self-report on the benchmark.
