@@ -46,13 +46,15 @@
 }
 
 body {
-    font-family: var(--font-family);
-    background-color: var(--bg-body);
-    color: var(--text-main);
-    line-height: 1.5;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+ font-family: var(--font-family);
+ background-color: var(--bg-body);
+ color: var(--text-main);
+ line-height: 1.5;
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+ width: 100%;
+ overflow-x: hidden;
 }
 
 svg text {
@@ -86,37 +88,37 @@ svg text {
         .site-header {
             padding: 1rem;
         }
-        
+
         .header-content {
             flex-direction: column;
             align-items: center;
             text-align: center;
             gap: 1.25rem;
         }
-    
+
         .header-left {
             flex-direction: column;
             gap: 0.75rem;
             width: 100%;
             align-items: center;
         }
-    
+
         .social-links {
             justify-content: center;
             width: 100%;
         }
-    
+
         .controls {
             flex-direction: column;
             width: 100%;
             gap: 1rem;
         }
-    
+
         .split-selector {
             width: 100%;
             justify-content: center;
         }
-    
+
         .main-nav {
             width: 100%;
             justify-content: center;
@@ -349,8 +351,17 @@ tbody tr:hover {
 }
 
 .chart-container h3 {
-    margin-bottom: 1rem;
-    color: var(--text-header);
+ margin-bottom: 1rem;
+ color: var(--text-header);
+ word-wrap: break-word;
+ overflow-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+    .chart-container h3 {
+        font-size: 1.1rem;
+        line-height: 1.4;
+    }
 }
 
 #rank-chart {
@@ -367,7 +378,7 @@ svg {
         margin: 1rem auto;
         padding: 0 0.5rem;
     }
-    
+
     .table-wrapper {
         margin-bottom: 1.5rem;
         width: 100%;
@@ -378,7 +389,7 @@ svg {
     #leaderboard-table {
         min-width: 500px; /* Force scroll on small screens */
     }
-    
+
     th, td {
         padding: 0.6rem 0.75rem;
         font-size: 0.85rem;
@@ -506,7 +517,7 @@ svg {
     display: grid;
     grid-template-columns: 320px 1fr;
     gap: 1.5rem;
-    min-height: 700px; 
+    min-height: 700px;
     margin-bottom: 1rem;
 }
 
@@ -730,9 +741,15 @@ svg {
 }
 
 .section-title {
-    color: var(--text-header);
-    font-size: 1.5rem;
-    font-weight: 700;
+ color: var(--text-header);
+ font-size: 1.5rem;
+ font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.2rem;
+    }
 }
 
 #category-selector-container {
@@ -1072,7 +1089,7 @@ svg {
     .riddle-content {
         padding: 1rem;
     }
-    
+
     .recap-table td:first-child, .recap-table th:first-child {
         min-width: 100px;
         padding-left: 0.5rem;
@@ -1683,7 +1700,7 @@ span.status-incorrect {
         transform: translate(-50%, -50%); /* Center on screen for better mobile UX */
         box-shadow: 0 0 0 100vmax rgba(0,0,0,0.5); /* Modal-like effect */
     }
-    
+
     .info-tooltip::after {
         display: none; /* Hide arrow on mobile as it's now centered */
     }

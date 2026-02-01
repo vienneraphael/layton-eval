@@ -83,7 +83,7 @@ let analyticsCategorySelect = null; // New selector for analytics tab
 // Color helper
 function getModelColor(modelName, provider, index, total) {
     const baseColor = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
-    
+
     const hexToRgb = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
@@ -114,7 +114,7 @@ function getModelColor(modelName, provider, index, total) {
 
     const rgb = hexToRgb(baseColor);
     const [h, s, l] = rgbToHsl(rgb.r, rgb.g, rgb.b);
-    
+
     let finalLightness;
     if (total <= 1) {
         finalLightness = Math.max(45, l);
@@ -123,7 +123,7 @@ function getModelColor(modelName, provider, index, total) {
         const maxL = 85;
         finalLightness = minL + (index / (total - 1)) * (maxL - minL);
     }
-    
+
     // Convert HSL back to RGB for better browser compatibility
     const hslToRgb = (h, s, l) => {
         s /= 100; l /= 100;
@@ -160,7 +160,7 @@ const elements = {
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     loadSplit('llm'); // Load default
-    
+
     // Resize handler with debounce
     let resizeTimer;
     window.addEventListener('resize', () => {
@@ -183,13 +183,13 @@ class MultiSelect {
         this.selectedValues = new Set(['all']);
         this.optionsMap = new Map();
         this.allOptions = []; // Store original options for searching
-        
+
         if (!this.container) return;
 
         this.trigger = this.container.querySelector('.multiselect-trigger');
         this.dropdown = this.container.querySelector('.multiselect-dropdown');
         this.triggerSpan = this.trigger.querySelector('span'); // First span
-        
+
         // Search support
         this.searchInput = this.container.querySelector('.model-search-input');
         if (this.searchInput) {
@@ -225,7 +225,7 @@ class MultiSelect {
 
         this.dropdown.classList.toggle('show');
         this.trigger.classList.toggle('active');
-        
+
         if (this.dropdown.classList.contains('show') && this.searchInput) {
             this.searchInput.focus();
             this.filterOptions(); // Reset filter on open
@@ -247,8 +247,8 @@ class MultiSelect {
     filterOptions() {
         if (!this.searchInput) return;
         const query = this.searchInput.value.toLowerCase();
-        const filtered = this.allOptions.filter(o => 
-            o.label.toLowerCase().includes(query) || 
+        const filtered = this.allOptions.filter(o =>
+            o.label.toLowerCase().includes(query) ||
             (o.provider && o.provider.toLowerCase().includes(query))
         );
         this.renderOptions(filtered, query.length > 0);
@@ -257,11 +257,11 @@ class MultiSelect {
     renderOptions(options, isSearching = false) {
         // Find or create options list container
         let listContainer = this.dropdown.querySelector('.model-options-list') || this.dropdown;
-        
+
         // If it's the dropdown itself, we need to preserve the header and search wrapper
         const header = this.dropdown.querySelector('.multiselect-header');
         const searchWrapper = this.dropdown.querySelector('.model-search-wrapper');
-        
+
         // Clear only the options
         if (listContainer === this.dropdown) {
             // Keep header and search
@@ -303,7 +303,7 @@ class MultiSelect {
         options.forEach(opt => {
             this.addOption(opt.value, opt.label, listContainer);
         });
-        
+
         if (options.length === 0) {
             const noRes = document.createElement('div');
             noRes.className = 'multiselect-option no-results';
@@ -318,14 +318,14 @@ class MultiSelect {
         const div = document.createElement('div');
         div.className = 'multiselect-option';
         const strValue = String(value);
-        
+
         div.innerHTML = `
             <input type="checkbox" value="${strValue}" ${this.selectedValues.has(strValue) ? 'checked' : ''}>
             <span>${label}</span>
         `;
-        
+
         const checkbox = div.querySelector('input');
-        
+
         div.onclick = (e) => {
             e.stopPropagation();
             if (e.target !== checkbox) {
@@ -406,7 +406,7 @@ class SearchableSelect {
         this.placeholder = placeholder;
         this.highlightedIndex = -1;
         this.isOpen = false;
-        
+
         this.render();
     }
 
@@ -441,8 +441,8 @@ class SearchableSelect {
         this.searchInput.onclick = (e) => e.stopPropagation();
         this.searchInput.oninput = () => {
             const query = this.searchInput.value.toLowerCase();
-            this.filteredOptions = this.options.filter(o => 
-                o.label.toLowerCase().includes(query) || 
+            this.filteredOptions = this.options.filter(o =>
+                o.label.toLowerCase().includes(query) ||
                 (o.provider && o.provider.toLowerCase().includes(query))
             );
             this.highlightedIndex = this.filteredOptions.length > 0 ? 0 : -1;
@@ -553,13 +553,13 @@ function initEventListeners() {
 
     // Riddle Search
     elements.riddleSearch.addEventListener('input', () => filterRiddleGrid());
-    
+
     // Filters - Init MultiSelects
     categorySelect = new MultiSelect('category-filter-container', 'Categories', (selected) => {
         state.filters.categories = new Set(selected);
         filterRiddleGrid();
     });
-    
+
     picaratsSelect = new MultiSelect('picarats-filter-container', 'Picarats', (selected) => {
         state.filters.picarats = new Set(selected);
         filterRiddleGrid();
@@ -586,7 +586,7 @@ function initEventListeners() {
 
 function switchTab(tabId) {
     state.activeTab = tabId;
-    
+
     // Update buttons
     const tabs = document.querySelectorAll('.nav-btn');
     tabs.forEach(btn => {
@@ -609,7 +609,7 @@ function switchTab(tabId) {
 async function loadSplit(split) {
     console.log(`loadSplit called for: ${split}`);
     state.currentSplit = split;
-    
+
     // Check cache
     if (state.cache[split].loaded) {
         console.log(`Split ${split} already loaded, using cache.`);
@@ -622,10 +622,10 @@ async function loadSplit(split) {
         console.error(`No configuration found for split: ${split}`);
         return;
     }
-    
+
     try {
         console.log(`Loading data files for split: ${split}...`);
-        
+
         // Load all data in parallel for better performance
         const [results, metadata, ppi] = await Promise.all([
             loadJSONL(config.results),
@@ -635,13 +635,13 @@ async function loadSplit(split) {
 
         console.log(`Data files received for ${split}. Processing...`);
         state.cache[split].results = results;
-        
+
         // Build model-to-provider map
         state.cache[split].modelProviders = new Map(results.map(r => [r.model, r.provider]));
-        
+
         // Index Metadata by ID
         state.cache[split].riddles = new Map(metadata.map(r => [r.id, r]));
-        
+
         // Attach provider to PPI if missing
         ppi.forEach(p => {
             if (!p.provider) {
@@ -650,7 +650,7 @@ async function loadSplit(split) {
         });
 
         state.cache[split].ppi = ppi;
-        
+
         // Identify all judges for this split
         const judges = new Set();
         ppi.forEach(p => {
@@ -663,9 +663,9 @@ async function loadSplit(split) {
         state.cache[split].judges = Array.from(judges).sort();
 
         state.cache[split].loaded = true;
-        
+
         console.log(`Successfully loaded and processed ${results.length} results, ${metadata.length} riddles, and ${ppi.length} predictions.`);
-        
+
         onDataLoaded();
 
     } catch (e) {
@@ -687,7 +687,7 @@ async function loadJSONL(url) {
         const text = await response.text();
         const lines = text.trim().split('\n');
         console.log(`Received ${lines.length} lines from ${url}`);
-        
+
         return lines
             .filter(line => line.trim())
             .map((line, index) => {
@@ -727,7 +727,7 @@ function renderLeaderboard() {
     // Render Rows
     data.forEach(row => {
         const tr = document.createElement('tr');
-        
+
         // Rank
         const tdRank = document.createElement('td');
         tdRank.textContent = row.rank;
@@ -782,13 +782,13 @@ function renderRankChart(data) {
     const width = isMobile ? 800 : (container.clientWidth || 800);
     const modelHeight = isMobile ? 25 : 30; // pixels per model
     const height = Math.max(isMobile ? 300 : 400, data.length * modelHeight + (isMobile ? 100 : 150)); // Dynamic height
-    const padding = { 
-        top: 40, 
-        right: isMobile ? 20 : 60, 
-        bottom: isMobile ? 50 : 60, 
+    const padding = {
+        top: 40,
+        right: isMobile ? 20 : 60,
+        bottom: isMobile ? 50 : 60,
         left: isMobile ? 150 : 200 // Increased left padding on mobile for model names
-    }; 
-    
+    };
+
     // Detect Score Range (0-1 or 0-100)
     let maxScore = 100;
     const allScoresSmall = data.every(d => d.score <= 1);
@@ -797,7 +797,7 @@ function renderRankChart(data) {
     // Calculate dynamic Score range
     let minDataScore = maxScore;
     let maxDataScore = 0;
-    
+
     data.forEach(d => {
         const ci = d['95% CI (±)'];
         const low = d.score - ci;
@@ -817,17 +817,17 @@ function renderRankChart(data) {
 
     const chartHeight = height - padding.top - padding.bottom;
     const chartWidth = width - padding.left - padding.right;
-    
+
     // SVG
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("width", width); // Force width to allow scroll
     svg.setAttribute("height", height);
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`); 
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.style.display = "block";
     svg.style.width = width + "px"; // Ensure width is strictly applied
     svg.style.minWidth = width + "px"; // Ensure width is strictly applied
-    
+
     // X Scale function (Score)
     const xScale = (score) => {
         return padding.left + ((score - axisMin) / (axisMax - axisMin)) * chartWidth;
@@ -844,7 +844,7 @@ function renderRankChart(data) {
     for (let i = 0; i <= tickCount; i++) {
         const val = axisMin + (i / tickCount) * (axisMax - axisMin);
         const x = xScale(val);
-        
+
         // Grid Line
         const gridLine = document.createElementNS(svgNS, "line");
         gridLine.setAttribute("x1", x);
@@ -876,7 +876,7 @@ function renderRankChart(data) {
     // Draw Grid Lines (Horizontal) - Model Ticks
     data.forEach((_, index) => {
         const y = yScale(index);
-        
+
         const gridLine = document.createElementNS(svgNS, "line");
         gridLine.setAttribute("x1", padding.left);
         gridLine.setAttribute("y1", y);
@@ -913,7 +913,7 @@ function renderRankChart(data) {
 
         // Caps
         const capHeight = isMobile ? 6 : 10;
-        
+
         // Left Cap
         const cap1 = document.createElementNS(svgNS, "line");
         cap1.setAttribute("x1", xLow);
@@ -952,7 +952,7 @@ function renderRankChart(data) {
         nameLabel.setAttribute("fill", color);
         nameLabel.setAttribute("font-size", isMobile ? "10px" : "12px");
         nameLabel.setAttribute("font-weight", "500");
-        
+
         // Truncate model name on mobile if too long
         let modelName = row.model;
         if (isMobile && modelName.length > 25) {
@@ -977,16 +977,16 @@ function renderRankChart(data) {
     svg.appendChild(xAxisLabel);
 
     // Add info icon next to axis label (smaller, positioned above and to the right)
-    const iconOffset = isMobile ? 42 : 48; // User requested slightly further right from 38
+    const iconOffset = isMobile ? 50 : 48; // Increased from 42 to 50 to avoid overlap
     const infoIconX = padding.left + chartWidth / 2 + iconOffset;
     const infoIconY = height - (isMobile ? 18 : 22);
     const tooltipText = "Model score is a 95%-CI estimation of the % of correct answers a human annotator would have attributed to the model. Answer correctness is based on both answer and justification.";
-    
+
     const infoGroup = document.createElementNS(svgNS, "g");
     infoGroup.setAttribute("class", "svg-info-icon");
     infoGroup.style.cursor = "help";
     infoGroup.setAttribute("pointer-events", "all");
-    
+
     // Circle background
     const infoCircle = document.createElementNS(svgNS, "circle");
     infoCircle.setAttribute("cx", infoIconX);
@@ -996,7 +996,7 @@ function renderRankChart(data) {
     infoCircle.setAttribute("stroke", "#6b7280");
     infoCircle.setAttribute("stroke-width", "1");
     infoGroup.appendChild(infoCircle);
-    
+
     // Transparent overlay for even better mobile tapping (keep this large!)
     if (isMobile) {
         const tapTarget = document.createElementNS(svgNS, "circle");
@@ -1021,7 +1021,7 @@ function renderRankChart(data) {
     infoText.setAttribute("pointer-events", "none");
     infoText.textContent = "i";
     infoGroup.appendChild(infoText);
-    
+
     // Create HTML tooltip element
     let axisTooltip = document.getElementById('axis-info-tooltip');
     if (!axisTooltip) {
@@ -1031,24 +1031,24 @@ function renderRankChart(data) {
         axisTooltip.textContent = tooltipText;
         document.body.appendChild(axisTooltip);
     }
-    
+
     const showTooltip = (e) => {
         if (e) e.preventDefault();
         infoCircle.setAttribute("fill", "#2563eb");
         infoCircle.setAttribute("stroke", "#2563eb");
         infoText.setAttribute("fill", "#ffffff");
-        
+
         // Position and show tooltip relative to both text and icon
         const iconRect = infoGroup.getBoundingClientRect();
         const textRect = xAxisLabel.getBoundingClientRect();
-        
+
         const combinedLeft = textRect.left;
         const combinedRight = iconRect.right;
         const combinedWidth = combinedRight - combinedLeft;
-        
+
         // Use a much larger gap on mobile and ensure it's calculated correctly
         const gap = isMobile ? 120 : 15; // Slightly reduced from 150 to 120 as 150 might be too much
-        
+
         let left = combinedLeft + combinedWidth / 2;
         const screenWidth = window.innerWidth;
         const tooltipWidth = isMobile ? 140 : 280;
@@ -1066,7 +1066,7 @@ function renderRankChart(data) {
         const topPos = Math.min(iconRect.top, textRect.top) - gap;
         axisTooltip.style.top = topPos + 'px';
         axisTooltip.style.display = 'block';
-        
+
         // On mobile, ensure it doesn't have transform that might be messing up the 'top' setting
         if (isMobile) {
             axisTooltip.style.transform = 'translateX(-50%)';
@@ -1104,18 +1104,18 @@ function renderRankChart(data) {
 
     infoGroup.addEventListener("click", toggleTooltip);
     xAxisLabel.addEventListener("click", toggleTooltip);
-    
+
     // Support touch specifically to avoid hover/click issues
     infoGroup.addEventListener("touchstart", toggleTooltip, { passive: false });
     xAxisLabel.addEventListener("touchstart", toggleTooltip, { passive: false });
-    
+
     // Hide when clicking elsewhere
     document.addEventListener("click", (e) => {
         if (!infoGroup.contains(e.target) && !xAxisLabel.contains(e.target)) {
             hideTooltip();
         }
     });
-    
+
     svg.appendChild(infoGroup);
 
     container.appendChild(svg);
@@ -1125,7 +1125,7 @@ function renderRankChart(data) {
 
 function renderAnalytics() {
     if (state.activeTab !== 'analytics') return;
-    
+
     const isMobile = window.innerWidth <= 768;
     const splitData = state.cache[state.currentSplit];
     if (!splitData || !splitData.loaded) return;
@@ -1135,10 +1135,10 @@ function renderAnalytics() {
     const results = splitData.results;
 
     // 1. Identify all models and their stats
-    const allModelsStats = {}; 
+    const allModelsStats = {};
     const categories = new Set();
     const riddlesByCategory = {}; // New: Track unique riddle IDs per category
-    
+
     ppi.forEach(p => {
         const riddle = riddlesMap.get(p.riddle_id);
         if (!riddle) return;
@@ -1167,13 +1167,13 @@ function renderAnalytics() {
         if (valid) {
             const cat = riddle.category || 'Unknown';
             categories.add(cat);
-            
+
             if (!riddlesByCategory[cat]) riddlesByCategory[cat] = new Set();
             riddlesByCategory[cat].add(p.riddle_id);
 
             if (!allModelsStats[p.model]) allModelsStats[p.model] = {};
             if (!allModelsStats[p.model][cat]) allModelsStats[p.model][cat] = { total: 0, count: 0 };
-            
+
             allModelsStats[p.model][cat].total += score;
             allModelsStats[p.model][cat].count++;
         }
@@ -1188,7 +1188,7 @@ function renderAnalytics() {
     // 3. Render Single Large Radar Chart
     elements.radarMainContainer.innerHTML = '';
     elements.radarLegend.innerHTML = '';
-    
+
     // Find focus UI above the radar
     const focusUI = document.getElementById('radar-focus-ui');
 
@@ -1200,8 +1200,8 @@ function renderAnalytics() {
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
     svg.setAttribute("class", "radar-chart-svg");
-    svg.style.width = "100%"; 
-    svg.style.height = "100%"; 
+    svg.style.width = "100%";
+    svg.style.height = "100%";
     svg.style.aspectRatio = "1";
     svg.style.maxWidth = isMobile ? "100%" : "850px";
 
@@ -1215,7 +1215,7 @@ function renderAnalytics() {
         circle.setAttribute("r", radius * level);
         circle.setAttribute("class", "radar-grid-circle");
         svg.appendChild(circle);
-        
+
         const text = document.createElementNS(svgNS, "text");
         text.setAttribute("x", center + 5);
         text.setAttribute("y", center - (radius * level) - 5);
@@ -1241,10 +1241,10 @@ function renderAnalytics() {
         svg.appendChild(axis);
 
         // Position labels further out but with more coordinate space
-        const labelDist = radius + (isMobile ? 50 : 80); 
+        const labelDist = radius + (isMobile ? 50 : 80);
         const lx = center + Math.cos(angle) * labelDist;
         const ly = center + Math.sin(angle) * labelDist;
-        
+
         const words = cat.split(/\s+/);
         const text = document.createElementNS(svgNS, "text");
         text.setAttribute("x", lx);
@@ -1252,10 +1252,10 @@ function renderAnalytics() {
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("dominant-baseline", "middle");
         text.setAttribute("class", "radar-label");
-        text.style.cursor = 'pointer'; 
-        
+        text.style.cursor = 'pointer';
+
         // Use a relative font size based on our 1000px coordinate system
-        const baseFontSize = isMobile ? 16 : 24; 
+        const baseFontSize = isMobile ? 16 : 24;
         text.style.fontSize = `${baseFontSize}px`;
 
         // Click interaction for category selection and scroll
@@ -1267,7 +1267,7 @@ function renderAnalytics() {
                 analyticsCategorySelect.updateTriggerText();
             }
             renderCategoryBarPlot();
-            
+
             // Scroll to the category analysis section
             const section = document.getElementById('category-analysis-section');
             if (section) {
@@ -1288,7 +1288,7 @@ function renderAnalytics() {
                 tooltip.textContent = definition;
                 const rect = text.getBoundingClientRect();
                 const gap = isMobile ? 120 : 15;
-                
+
                 let left = rect.left + rect.width / 2;
                 const screenWidth = window.innerWidth;
                 const tooltipWidth = isMobile ? 140 : 280;
@@ -1304,13 +1304,13 @@ function renderAnalytics() {
                 tooltip.style.left = left + 'px';
                 tooltip.style.top = (rect.top - gap) + 'px';
                 tooltip.style.display = 'block';
-                
+
                 if (isMobile) {
                     tooltip.style.transform = 'translateX(-50%)';
                 } else {
                     tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
                 }
-                
+
                 text.style.fill = 'var(--primary)';
             });
             text.addEventListener('mouseleave', () => {
@@ -1321,7 +1321,7 @@ function renderAnalytics() {
         }
 
         // Center vertically based on number of lines
-        const lineHeight = baseFontSize * 1.1; 
+        const lineHeight = baseFontSize * 1.1;
         const totalHeight = (words.length - 1) * lineHeight;
         const startOffset = -totalHeight / 2;
 
@@ -1346,7 +1346,7 @@ function renderAnalytics() {
 
         const provider = state.cache[state.currentSplit].modelProviders.get(modelName) || 'default';
         if (!providerModelCounts[provider]) providerModelCounts[provider] = 0;
-        
+
         // Get number of total models for this provider to calculate step
         const modelsOfThisProvider = modelsToDisplay.filter(m => state.cache[state.currentSplit].modelProviders.get(m) === provider).length;
         const providerIdx = providerModelCounts[provider];
@@ -1372,11 +1372,11 @@ function renderAnalytics() {
         polygon.setAttribute("data-model", modelName);
         polygon.style.stroke = color;
         polygon.style.fill = color;
-        
+
         if (isDisabled) {
             polygon.style.display = 'none';
         }
-        
+
         svg.appendChild(polygon);
         polygons.push(polygon);
 
@@ -1387,7 +1387,7 @@ function renderAnalytics() {
             <span class="legend-color" style="background-color: ${color}"></span>
             <span class="legend-name">${modelName}</span>
         `;
-        
+
         const showFocusUI = (name, color) => {
             focusUI.innerHTML = `
                 <div class="radar-focus-color" style="background-color: ${color}"></div>
@@ -1402,7 +1402,7 @@ function renderAnalytics() {
 
         const highlight = () => {
             if (state.filters.disabledAnalyticsModels.has(modelName)) return;
-            
+
             legendItems.forEach(li => li.classList.remove('active'));
             legendItem.classList.add('active');
             polygons.forEach(p => {
@@ -1440,7 +1440,7 @@ function renderAnalytics() {
         legendItem.onmouseenter = highlight;
         legendItem.onmouseleave = reset;
         legendItem.onclick = toggle;
-        
+
         elements.radarLegend.appendChild(legendItem);
         legendItems.push(legendItem);
     });
@@ -1448,7 +1448,7 @@ function renderAnalytics() {
     elements.radarMainContainer.appendChild(svg);
 
     // --- NEW: Category Performance Analysis ---
-    
+
     // 1. Populate Analytics Category Selector
     const catOptions = sortedCategories.map(cat => ({
         value: cat,
@@ -1464,9 +1464,9 @@ function renderAnalytics() {
         // Only recreate if options changed significantly or it's the first time
         if (!analyticsCategorySelect) {
             analyticsCategorySelect = new SearchableSelect(
-                selectorContainer, 
-                catOptions, 
-                state.filters.selectedAnalyticsCategory, 
+                selectorContainer,
+                catOptions,
+                state.filters.selectedAnalyticsCategory,
                 (val) => {
                     state.filters.selectedAnalyticsCategory = val;
                     renderCategoryBarPlot();
@@ -1507,14 +1507,14 @@ function renderCategoryBarPlot() {
     const ppi = splitData.ppi;
     const riddlesMap = splitData.riddles;
     const results = splitData.results;
-    
+
     const modelPerformance = [];
-    
+
     // Get list of models from results to preserve provider info and initial sorting
     results.forEach(res => {
         const modelName = res.model;
         const provider = res.provider;
-        
+
         // Find all ppi entries for this model and this category
         let totalScore = 0;
         let count = 0;
@@ -1574,25 +1574,25 @@ function renderCategoryBarPlot() {
             modelsOfThisProviderMap[provider] = modelPerformance.filter(m => (m.provider || 'default') === provider).length;
         }
         if (!providerModelCounts[provider]) providerModelCounts[provider] = 0;
-        
+
         const providerIdx = providerModelCounts[provider];
         providerModelCounts[provider]++;
 
         const color = getModelColor(item.model, provider, providerIdx, modelsOfThisProviderMap[provider]);
         const performance = isNaN(item.performance) ? 0 : item.performance;
-        
+
         const barGroup = document.createElement('div');
         barGroup.className = 'category-bar-group';
-        
+
         // Truncate name for mobile if very long
         let modelName = item.model;
         if (isMobile && modelName.length > 30) {
             modelName = modelName.substring(0, 27) + "...";
         }
-        
+
         const labelWidthDesktop = 250;
         const styleAttr = isMobile ? '' : `style="width: ${labelWidthDesktop}px"`;
-        
+
         barGroup.innerHTML = `
             <div class="category-bar-label" ${styleAttr} title="${item.model}">${modelName}</div>
             <div class="category-bar-wrapper">
@@ -1600,7 +1600,7 @@ function renderCategoryBarPlot() {
                 <div class="category-bar-value">${performance.toFixed(1)}% ${isMobile ? '' : '(' + item.count + ')'}</div>
             </div>
         `;
-        
+
         container.appendChild(barGroup);
     });
 
@@ -1619,7 +1619,7 @@ function populateFilters(riddles) {
     const categories = new Set();
     const picarats = new Set();
     const riddlesByCategory = {}; // Count for label display
-    
+
     // We'll define fixed buckets for success rate
     const successBuckets = [
         { value: 'very_high', label: 'Very High (80-100%)', min: 80 },
@@ -1664,7 +1664,7 @@ function populateFilters(riddles) {
 
 function calculateRiddleStats(riddles, ppi) {
     if (!ppi) return;
-    
+
     const predictionsByRiddle = new Map();
     ppi.forEach(p => {
         if (!predictionsByRiddle.has(p.riddle_id)) {
@@ -1691,7 +1691,7 @@ function calculateRiddleStats(riddles, ppi) {
             if (p.human_both_correct !== null && p.human_both_correct !== undefined) {
                 totalScore += p.human_both_correct ? 1 : 0;
                 validPreds++;
-                return; 
+                return;
             }
 
             // Otherwise average available automated judges
@@ -1747,7 +1747,7 @@ function populateRiddleList() {
         const card = createRiddleCard(r);
         grid.appendChild(card);
     });
-    
+
     // Apply initial filter in case of reload/split change keeping search
     filterRiddleGrid();
 }
@@ -1758,7 +1758,7 @@ function createRiddleCard(riddle) {
     card.dataset.id = riddle.id;
     card.dataset.category = riddle.category || 'Unknown';
     card.dataset.picarats = riddle.picarats !== undefined ? riddle.picarats : 'Unknown';
-    
+
     // Dataset for success rate
     card.dataset.successRate = riddle.successRate !== null ? riddle.successRate : -1;
 
@@ -1777,7 +1777,7 @@ function createRiddleCard(riddle) {
     ].filter(Boolean).join(' ').toLowerCase();
 
     card.dataset.search = searchTerms;
-    
+
     card.onclick = () => openModal(riddle.id);
 
     // ID
@@ -1794,10 +1794,10 @@ function createRiddleCard(riddle) {
     // Meta
     const meta = document.createElement('div');
     meta.className = 'card-meta';
-    
+
     // Format Picarats display
-    const picaratsDisplay = (riddle.picarats === 0 || riddle.picarats === undefined || riddle.picarats === null) 
-        ? '?' 
+    const picaratsDisplay = (riddle.picarats === 0 || riddle.picarats === undefined || riddle.picarats === null)
+        ? '?'
         : riddle.picarats;
 
     // Format Success Rate
@@ -1810,7 +1810,7 @@ function createRiddleCard(riddle) {
         else if (rate >= 40) colorClass = 'rate-medium';
         else if (rate >= 20) colorClass = 'rate-low';
         else colorClass = 'rate-very-low';
-        
+
         successBadge = `<span class="badge badge-success ${colorClass}">${rate}% Good</span>`;
     }
 
@@ -1844,7 +1844,7 @@ function getProviderFromModelName(modelName, modelProviders) {
     if (modelProviders && modelProviders.has(modelName)) {
         return modelProviders.get(modelName);
     }
-    
+
     const name = modelName.toLowerCase();
     if (name.includes('gpt') || name.includes('openai') || name.includes('o1') || name.includes('o3')) return 'openai';
     if (name.includes('claude') || name.includes('anthropic')) return 'anthropic';
@@ -1862,17 +1862,17 @@ function filterRiddleGrid() {
     const selectedRates = state.filters.successRates;
 
     const cards = elements.riddleGrid.getElementsByClassName('riddle-card');
-    
+
     for (let card of cards) {
         const matchesSearch = !query || card.dataset.search.includes(query);
-        
+
         const cat = card.dataset.category;
         const pic = card.dataset.picarats; // String
         const rate = parseFloat(card.dataset.successRate);
-        
+
         const matchesCat = selectedCats.has('all') || selectedCats.has(cat);
         const matchesPic = selectedPics.has('all') || selectedPics.has(pic);
-        
+
         let matchesRate = selectedRates.has('all');
         if (!matchesRate) {
             // Check against selected buckets
@@ -1883,7 +1883,7 @@ function filterRiddleGrid() {
             if (selectedRates.has('low') && rate >= 20 && rate < 40) matchesRate = true;
             if (selectedRates.has('very_low') && rate >= 0 && rate < 20) matchesRate = true;
         }
-        
+
         card.style.display = (matchesSearch && matchesCat && matchesPic && matchesRate) ? 'flex' : 'none';
     }
 }
@@ -1904,13 +1904,13 @@ function closeModal() {
 function renderRiddleDetail(riddleId) {
     const splitData = state.cache[state.currentSplit];
     const riddle = splitData.riddles.get(riddleId);
-    
+
     // Get all predictions for this riddle
     const predictions = splitData.ppi.filter(p => p.riddle_id === riddleId);
 
     const container = elements.modalBody;
     container.innerHTML = '';
-    
+
     // Add class for styling reuse
     container.className = 'riddle-detail';
 
@@ -1930,10 +1930,10 @@ function renderRiddleDetail(riddleId) {
     // Meta
     const meta = document.createElement('div');
     meta.className = 'riddle-meta';
-    
+
     // Format Picarats display
-    const picaratsDisplay = (riddle.picarats === 0 || riddle.picarats === undefined || riddle.picarats === null) 
-        ? '?' 
+    const picaratsDisplay = (riddle.picarats === 0 || riddle.picarats === undefined || riddle.picarats === null)
+        ? '?'
         : riddle.picarats;
 
     meta.innerHTML = `
@@ -1967,7 +1967,7 @@ function renderRiddleDetail(riddleId) {
         img.className = 'riddle-image';
         img.loading = 'lazy';
         img.style.marginBottom = '0'; // Reset margin
-        
+
         imgContainer.appendChild(img);
         problemCard.appendChild(imgContainer);
     }
@@ -2027,7 +2027,7 @@ function renderRiddleDetail(riddleId) {
     // Hints
     const hintsSection = document.createElement('div');
     hintsSection.className = 'hints-section';
-    
+
     const hints = [
         { id: 'hint1', label: 'First Hint', text: riddle.first_hint },
         { id: 'hint2', label: 'Second Hint', text: riddle.second_hint },
@@ -2039,7 +2039,7 @@ function renderRiddleDetail(riddleId) {
         // Tab Headers
         const tabHeader = document.createElement('div');
         tabHeader.className = 'hints-tabs';
-        
+
         // Content Container
         const contentContainer = document.createElement('div');
         contentContainer.className = 'hints-content-container';
@@ -2049,7 +2049,7 @@ function renderRiddleDetail(riddleId) {
             const btn = document.createElement('button');
             btn.className = `hint-tab-btn ${index === 0 ? 'active' : ''}`;
             btn.textContent = h.label;
-            
+
             // Pane
             const pane = document.createElement('div');
             pane.id = `pane-${h.id}`; // Unique ID within modal
@@ -2062,12 +2062,12 @@ function renderRiddleDetail(riddleId) {
                 // Deactivate all
                 tabHeader.querySelectorAll('.hint-tab-btn').forEach(b => b.classList.remove('active'));
                 contentContainer.querySelectorAll('.hint-tab-pane').forEach(p => p.classList.remove('active'));
-                
+
                 // Activate clicked
                 btn.classList.add('active');
                 pane.classList.add('active');
             };
-            
+
             tabHeader.appendChild(btn);
         });
 
@@ -2080,50 +2080,50 @@ function renderRiddleDetail(riddleId) {
     if (predictions.length > 0) {
         const recapContainer = document.createElement('div');
         recapContainer.className = 'recap-table-container';
-        
+
         const table = document.createElement('table');
         table.className = 'recap-table';
-        
+
         // Use pre-identified judges for this split
         const sortedJudges = splitData.judges || [];
-        
+
         // Header
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
-        
+
         const thModel = document.createElement('th');
         thModel.textContent = 'Model';
         headerRow.appendChild(thModel);
-        
+
         // Up to 4 judges as per TODO, but let's be flexible while following the requirement
         sortedJudges.forEach((j, i) => {
             const th = document.createElement('th');
             const provider = getProviderFromModelName(j, splitData.modelProviders);
-            
+
             // Show shortened judge name or fallback to J1, J2...
             th.textContent = JUDGE_DISPLAY_NAMES[provider] || `J${i+1}`;
             th.title = j; // Full name on hover
-            
+
             // Color based on provider
             th.style.color = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
             th.style.fontWeight = '700';
-            
+
             headerRow.appendChild(th);
         });
-        
+
         const thHuman = document.createElement('th');
         thHuman.textContent = 'Human';
         headerRow.appendChild(thHuman);
-        
+
         thead.appendChild(headerRow);
         table.appendChild(thead);
-        
+
         // Body
         const tbody = document.createElement('tbody');
-        
+
         predictions.forEach(pred => {
             const tr = document.createElement('tr');
-            
+
             // Model
             const tdModel = document.createElement('td');
             tdModel.className = 'model-name-cell';
@@ -2132,7 +2132,7 @@ function renderRiddleDetail(riddleId) {
             tdModel.title = `Click to view ${pred.model}'s full prediction`;
             tr.appendChild(tdModel);
             modelCells.push({ el: tdModel, model: pred.model });
-            
+
             // Judges
             sortedJudges.forEach(j => {
                 const td = document.createElement('td');
@@ -2140,16 +2140,16 @@ function renderRiddleDetail(riddleId) {
                 td.innerHTML = renderCheckCross(val);
                 tr.appendChild(td);
             });
-            
+
             // Human
             const tdHuman = document.createElement('td');
             const hVal = pred.human_both_correct;
             tdHuman.innerHTML = renderCheckCross(hVal);
             tr.appendChild(tdHuman);
-            
+
             tbody.appendChild(tr);
         });
-        
+
         table.appendChild(tbody);
         recapContainer.appendChild(table);
         container.appendChild(recapContainer);
@@ -2188,7 +2188,7 @@ function renderRiddleDetail(riddleId) {
 
         // Initial render
         const initialModel = predictions[0].model;
-        
+
         const renderSelectedCard = (modelName) => {
             const pred = predictions.find(p => p.model === modelName);
             cardContainer.innerHTML = '';
@@ -2219,7 +2219,7 @@ function renderPredictionCard(pred, splitData) {
     const card = document.createElement('div');
     card.className = 'riddle-content';
     card.style.borderColor = 'var(--border-color)';
-    
+
     // Model Name
     const modelHeader = document.createElement('h4');
     modelHeader.textContent = pred.model;
@@ -2252,10 +2252,10 @@ function renderPredictionCard(pred, splitData) {
     // Judges Table
     const tableContainer = document.createElement('div');
     tableContainer.className = 'judge-table-container';
-    
+
     const table = document.createElement('table');
     table.className = 'judge-table';
-    
+
     const thead = document.createElement('thead');
     thead.innerHTML = `
         <tr>
@@ -2264,9 +2264,9 @@ function renderPredictionCard(pred, splitData) {
         </tr>
     `;
     table.appendChild(thead);
-    
+
     const tbody = document.createElement('tbody');
-    
+
     const addRow = (name, ans, just, both, provider) => {
         const tr = document.createElement('tr');
         const tdName = document.createElement('td');
@@ -2274,11 +2274,11 @@ function renderPredictionCard(pred, splitData) {
         tdName.textContent = name;
         tdName.style.color = PROVIDER_COLORS[provider] || PROVIDER_COLORS['default'];
         tr.appendChild(tdName);
-        
+
         const td = document.createElement('td');
         td.innerHTML = renderCheckCross(both);
         tr.appendChild(td);
-        
+
         tbody.appendChild(tr);
     };
 
