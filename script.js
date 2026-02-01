@@ -70,13 +70,15 @@ const state = {
         categories: new Set(['all']),
         picarats: new Set(['all']),
         successRates: new Set(['all']),
-        disabledAnalyticsModels: new Set() // For toggling in legend
+        disabledAnalyticsModels: new Set(), // For toggling in legend
+        selectedAnalyticsCategory: null // New: for category performance analysis
     }
 };
 
 let categorySelect = null;
 let picaratsSelect = null;
 let successRateSelect = null;
+let analyticsCategorySelect = null; // New selector for analytics tab
 
 // Color helper
 function getModelColor(modelName, provider, index, total) {
@@ -370,12 +372,13 @@ class MultiSelect {
 }
 
 class SearchableSelect {
-    constructor(container, options, initialValue, onSelect) {
+    constructor(container, options, initialValue, onSelect, placeholder = 'Select an option') {
         this.container = container;
         this.options = options; // [{value, label, provider}]
         this.filteredOptions = options;
         this.onSelect = onSelect;
         this.selectedValue = initialValue;
+        this.placeholder = placeholder;
         this.highlightedIndex = -1;
         this.isOpen = false;
         
@@ -390,7 +393,7 @@ class SearchableSelect {
                     <span class="arrow">▼</span>
                 </button>
                 <div class="model-select-dropdown">
-                    <input type="text" class="model-search-input" placeholder="Search model...">
+                    <input type="text" class="model-search-input" placeholder="${this.placeholder}...">
                     <div class="model-options-list"></div>
                 </div>
             </div>
@@ -455,9 +458,10 @@ class SearchableSelect {
     updateTriggerText() {
         const selected = this.options.find(o => o.value === this.selectedValue);
         if (selected) {
-            this.currentValueSpan.innerHTML = `<span class="provider-prefix">${selected.provider}:</span> ${selected.label}`;
+            const providerPrefix = selected.provider ? `<span class="provider-prefix">${selected.provider}:</span> ` : '';
+            this.currentValueSpan.innerHTML = `${providerPrefix}${selected.label}`;
         } else {
-            this.currentValueSpan.textContent = 'Select a model';
+            this.currentValueSpan.textContent = this.placeholder;
         }
     }
 
@@ -468,7 +472,8 @@ class SearchableSelect {
             const isSelected = opt.value === this.selectedValue;
             const isHighlighted = index === this.highlightedIndex;
             div.className = `model-option ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}`;
-            div.innerHTML = `<span class="provider-prefix">${opt.provider}:</span> ${opt.label}`;
+            const providerPrefix = opt.provider ? `<span class="provider-prefix">${opt.provider}:</span> ` : '';
+            div.innerHTML = `${providerPrefix}${opt.label}`;
             div.onclick = (e) => {
                 e.stopPropagation();
                 this.select(opt.value);
@@ -1115,7 +1120,24 @@ function renderAnalytics() {
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("dominant-baseline", "middle");
         text.setAttribute("class", "radar-label");
-        text.style.cursor = 'help';
+        text.style.cursor = 'pointer'; // Changed from 'help' to 'pointer'
+
+        // Click interaction for category selection and scroll
+        text.onclick = (e) => {
+            e.stopPropagation();
+            state.filters.selectedAnalyticsCategory = cat;
+            if (analyticsCategorySelect) {
+                analyticsCategorySelect.selectedValue = cat;
+                analyticsCategorySelect.updateTriggerText();
+            }
+            renderCategoryBarPlot();
+            
+            // Scroll to the category analysis section
+            const section = document.getElementById('category-analysis-section');
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
 
         const definition = CATEGORY_DEFINITIONS[cat];
         if (definition) {
@@ -1267,6 +1289,150 @@ function renderAnalytics() {
     });
 
     elements.radarMainContainer.appendChild(svg);
+
+    // --- NEW: Category Performance Analysis ---
+    
+    // 1. Populate Analytics Category Selector
+    const catOptions = sortedCategories.map(cat => ({
+        value: cat,
+        label: cat
+    }));
+
+    if (!state.filters.selectedAnalyticsCategory || !sortedCategories.includes(state.filters.selectedAnalyticsCategory)) {
+        state.filters.selectedAnalyticsCategory = sortedCategories[0];
+    }
+
+    const selectorContainer = document.getElementById('category-selector-container');
+    if (selectorContainer) {
+        // Only recreate if options changed significantly or it's the first time
+        if (!analyticsCategorySelect) {
+            analyticsCategorySelect = new SearchableSelect(
+                selectorContainer, 
+                catOptions, 
+                state.filters.selectedAnalyticsCategory, 
+                (val) => {
+                    state.filters.selectedAnalyticsCategory = val;
+                    renderCategoryBarPlot();
+                },
+                'Search category'
+            );
+        } else {
+            // Update options in case they changed with the split
+            analyticsCategorySelect.options = catOptions;
+            analyticsCategorySelect.selectedValue = state.filters.selectedAnalyticsCategory;
+            analyticsCategorySelect.updateTriggerText();
+            analyticsCategorySelect.renderOptions(catOptions);
+        }
+    }
+
+    // 2. Initial render of the bar plot
+    renderCategoryBarPlot();
+}
+
+function renderCategoryBarPlot() {
+    const splitData = state.cache[state.currentSplit];
+    if (!splitData || !splitData.loaded) return;
+
+    const cat = state.filters.selectedAnalyticsCategory;
+    const container = document.getElementById('category-bar-plot-container');
+    if (!container || !cat) return;
+
+    container.innerHTML = '';
+
+    // Calculate performance for each model on THIS category
+    const ppi = splitData.ppi;
+    const riddlesMap = splitData.riddles;
+    const results = splitData.results;
+    
+    const modelPerformance = [];
+    
+    // Get list of models from results to preserve provider info and initial sorting
+    results.forEach(res => {
+        const modelName = res.model;
+        const provider = res.provider;
+        
+        // Find all ppi entries for this model and this category
+        let totalScore = 0;
+        let count = 0;
+
+        ppi.forEach(p => {
+            if (p.model !== modelName) return;
+            const riddle = riddlesMap.get(p.riddle_id);
+            if (!riddle || riddle.category !== cat) return;
+
+            let score = 0;
+            let valid = false;
+
+            if (p.human_both_correct !== null && p.human_both_correct !== undefined) {
+                score = p.human_both_correct ? 1 : 0;
+                valid = true;
+            } else {
+                let judgeScoreSum = 0;
+                let judgeCount = 0;
+                Object.keys(p).forEach(k => {
+                    if (k.startsWith('both_correct_') && p[k] !== null) {
+                        judgeScoreSum += p[k] ? 1 : 0;
+                        judgeCount++;
+                    }
+                });
+                if (judgeCount > 0) {
+                    score = judgeScoreSum / judgeCount;
+                    valid = true;
+                }
+            }
+
+            if (valid) {
+                totalScore += score;
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            modelPerformance.push({
+                model: modelName,
+                provider: provider,
+                performance: (totalScore / count) * 100,
+                count: count
+            });
+        }
+    });
+
+    // Sort: Best to worst
+    modelPerformance.sort((a, b) => b.performance - a.performance);
+
+    // Render bars
+    const providerModelCounts = {};
+    const modelsOfThisProviderMap = {};
+
+    modelPerformance.forEach(item => {
+        const provider = item.provider || 'default';
+        if (!modelsOfThisProviderMap[provider]) {
+            modelsOfThisProviderMap[provider] = modelPerformance.filter(m => (m.provider || 'default') === provider).length;
+        }
+        if (!providerModelCounts[provider]) providerModelCounts[provider] = 0;
+        
+        const providerIdx = providerModelCounts[provider];
+        providerModelCounts[provider]++;
+
+        const color = getModelColor(item.model, provider, providerIdx, modelsOfThisProviderMap[provider]);
+        
+        const barGroup = document.createElement('div');
+        barGroup.className = 'category-bar-group';
+        
+        barGroup.innerHTML = `
+            <div class="category-bar-label" title="${item.model}">${item.model}</div>
+            <div class="category-bar-wrapper">
+                <div class="category-bar-fill" style="width: ${item.performance}%; background-color: ${color}"></div>
+                <div class="category-bar-value">${item.performance.toFixed(1)}%</div>
+            </div>
+        `;
+        
+        container.appendChild(barGroup);
+    });
+
+    if (modelPerformance.length === 0) {
+        container.innerHTML = `<div class="empty-state">No performance data available for this category in the current split.</div>`;
+    }
 }
 
 function renderRadarChart(container, stats, labels, provider) {
