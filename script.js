@@ -115,18 +115,30 @@ function getModelColor(modelName, provider, index, total) {
     const rgb = hexToRgb(baseColor);
     const [h, s, l] = rgbToHsl(rgb.r, rgb.g, rgb.b);
     
-    // Create a wide spread of lightness (20% to 85%) specifically for this provider's models
     let finalLightness;
     if (total <= 1) {
-        finalLightness = l; // Keep original if only one model
+        finalLightness = Math.max(45, l);
     } else {
-        // Linear spread between 25% and 85%
-        const minL = 25;
+        const minL = 45;
         const maxL = 85;
         finalLightness = minL + (index / (total - 1)) * (maxL - minL);
     }
     
-    return `hsl(${h}, ${Math.min(100, s + 15)}%, ${finalLightness}%)`;
+    // Convert HSL back to RGB for better browser compatibility
+    const hslToRgb = (h, s, l) => {
+        s /= 100; l /= 100;
+        const k = n => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+        return [
+            Math.round(255 * f(0)),
+            Math.round(255 * f(8)),
+            Math.round(255 * f(4))
+        ];
+    };
+
+    const [r, g, b] = hslToRgb(h, Math.min(100, s + 15), finalLightness);
+    return `rgb(${r}, ${g}, ${b})`;
 }
 
 // DOM Elements
@@ -148,6 +160,19 @@ const elements = {
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     loadSplit('llm'); // Load default
+    
+    // Resize handler with debounce
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (state.activeTab === 'leaderboard') {
+                renderLeaderboard();
+            } else if (state.activeTab === 'analytics') {
+                renderAnalytics();
+            }
+        }, 250);
+    });
 });
 
 class MultiSelect {
@@ -582,10 +607,12 @@ function switchTab(tabId) {
 }
 
 async function loadSplit(split) {
+    console.log(`loadSplit called for: ${split}`);
     state.currentSplit = split;
     
     // Check cache
     if (state.cache[split].loaded) {
+        console.log(`Split ${split} already loaded, using cache.`);
         onDataLoaded();
         return;
     }
@@ -597,7 +624,7 @@ async function loadSplit(split) {
     }
     
     try {
-        console.log(`Loading data for split: ${split}...`);
+        console.log(`Loading data files for split: ${split}...`);
         
         // Load all data in parallel for better performance
         const [results, metadata, ppi] = await Promise.all([
@@ -606,6 +633,7 @@ async function loadSplit(split) {
             loadJSONL(config.ppi)
         ]);
 
+        console.log(`Data files received for ${split}. Processing...`);
         state.cache[split].results = results;
         
         // Build model-to-provider map
@@ -636,7 +664,7 @@ async function loadSplit(split) {
 
         state.cache[split].loaded = true;
         
-        console.log(`Successfully loaded ${results.length} results, ${metadata.length} riddles, and ${ppi.length} predictions.`);
+        console.log(`Successfully loaded and processed ${results.length} results, ${metadata.length} riddles, and ${ppi.length} predictions.`);
         
         onDataLoaded();
 
@@ -725,7 +753,6 @@ function renderLeaderboard() {
 
         // Rank Spread
         const tdSpread = document.createElement('td');
-        tdSpread.className = 'mobile-hide';
         // Format: "1 <--> 2" -> "[1] ⟷ [2]"
         const spreadParts = row.rank_spread.split('<-->').map(s => s.trim());
         if (spreadParts.length === 2) {
@@ -737,7 +764,6 @@ function renderLeaderboard() {
 
         // Provider
         const tdProvider = document.createElement('td');
-        tdProvider.className = 'mobile-hide';
         tdProvider.textContent = row.provider || '-';
         tr.appendChild(tdProvider);
 
@@ -752,10 +778,16 @@ function renderRankChart(data) {
     const container = elements.rankChart;
     container.innerHTML = '';
 
-    const width = Math.max(600, container.clientWidth || 800);
-    const modelHeight = 30; // pixels per model
-    const height = Math.max(400, data.length * modelHeight + 150); // Dynamic height
-    const padding = { top: 40, right: 60, bottom: 60, left: 200 }; // Increased left padding for model names
+    const isMobile = window.innerWidth <= 768;
+    const width = isMobile ? 800 : (container.clientWidth || 800);
+    const modelHeight = isMobile ? 25 : 30; // pixels per model
+    const height = Math.max(isMobile ? 300 : 400, data.length * modelHeight + (isMobile ? 100 : 150)); // Dynamic height
+    const padding = { 
+        top: 40, 
+        right: isMobile ? 20 : 60, 
+        bottom: isMobile ? 50 : 60, 
+        left: isMobile ? 150 : 200 // Increased left padding on mobile for model names
+    }; 
     
     // Detect Score Range (0-1 or 0-100)
     let maxScore = 100;
@@ -789,8 +821,12 @@ function renderRankChart(data) {
     // SVG
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("width", width);
+    svg.setAttribute("width", width); // Force width to allow scroll
     svg.setAttribute("height", height);
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`); 
+    svg.style.display = "block";
+    svg.style.width = width + "px"; // Ensure width is strictly applied
+    svg.style.minWidth = width + "px"; // Ensure width is strictly applied
     
     // X Scale function (Score)
     const xScale = (score) => {
@@ -804,7 +840,7 @@ function renderRankChart(data) {
     };
 
     // Draw Grid Lines (Vertical - Score Ticks)
-    const tickCount = 10;
+    const tickCount = isMobile ? 5 : 10; // Fewer ticks on mobile
     for (let i = 0; i <= tickCount; i++) {
         const val = axisMin + (i / tickCount) * (axisMax - axisMin);
         const x = xScale(val);
@@ -825,14 +861,16 @@ function renderRankChart(data) {
         text.setAttribute("y", height - padding.bottom + 20);
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("fill", "var(--text-muted)");
-        text.setAttribute("font-size", "11px");
+        text.setAttribute("font-size", isMobile ? "9px" : "11px");
         text.textContent = val.toFixed(allScoresSmall ? 2 : 0);
         svg.appendChild(text);
 
         // Label (Top - optional)
-        const textTop = text.cloneNode(true);
-        textTop.setAttribute("y", padding.top - 10);
-        svg.appendChild(textTop);
+        if (!isMobile) {
+            const textTop = text.cloneNode(true);
+            textTop.setAttribute("y", padding.top - 10);
+            svg.appendChild(textTop);
+        }
     }
 
     // Draw Grid Lines (Horizontal) - Model Ticks
@@ -874,7 +912,7 @@ function renderRankChart(data) {
         g.appendChild(line);
 
         // Caps
-        const capHeight = 10;
+        const capHeight = isMobile ? 6 : 10;
         
         // Left Cap
         const cap1 = document.createElementNS(svgNS, "line");
@@ -900,7 +938,7 @@ function renderRankChart(data) {
         const circle = document.createElementNS(svgNS, "circle");
         circle.setAttribute("cx", xScore);
         circle.setAttribute("cy", y);
-        circle.setAttribute("r", "4");
+        circle.setAttribute("r", isMobile ? "3" : "4");
         circle.setAttribute("fill", "var(--bg-surface)");
         circle.setAttribute("stroke", color);
         circle.setAttribute("stroke-width", "2");
@@ -908,13 +946,19 @@ function renderRankChart(data) {
 
         // Model Name Label (Horizontal on Y-Axis)
         const nameLabel = document.createElementNS(svgNS, "text");
-        nameLabel.setAttribute("x", padding.left - 15);
+        nameLabel.setAttribute("x", padding.left - 10);
         nameLabel.setAttribute("y", y + 4);
         nameLabel.setAttribute("text-anchor", "end");
         nameLabel.setAttribute("fill", color);
-        nameLabel.setAttribute("font-size", "12px");
+        nameLabel.setAttribute("font-size", isMobile ? "10px" : "12px");
         nameLabel.setAttribute("font-weight", "500");
-        nameLabel.textContent = row.model;
+        
+        // Truncate model name on mobile if too long
+        let modelName = row.model;
+        if (isMobile && modelName.length > 25) {
+            modelName = modelName.substring(0, 22) + "...";
+        }
+        nameLabel.textContent = modelName;
         g.appendChild(nameLabel);
 
         svg.appendChild(g);
@@ -923,17 +967,19 @@ function renderRankChart(data) {
     // Add X-axis label "Model Score" with info icon
     const xAxisLabel = document.createElementNS(svgNS, "text");
     xAxisLabel.setAttribute("x", padding.left + chartWidth / 2);
-    xAxisLabel.setAttribute("y", height - 15);
+    xAxisLabel.setAttribute("y", height - 10);
     xAxisLabel.setAttribute("text-anchor", "middle");
     xAxisLabel.setAttribute("fill", "var(--text-header)");
-    xAxisLabel.setAttribute("font-size", "13px");
+    xAxisLabel.setAttribute("font-size", isMobile ? "11px" : "13px");
     xAxisLabel.setAttribute("font-weight", "600");
+    xAxisLabel.style.cursor = "help";
     xAxisLabel.textContent = "Model Score";
     svg.appendChild(xAxisLabel);
 
     // Add info icon next to axis label (smaller, positioned above and to the right)
-    const infoIconX = padding.left + chartWidth / 2 + 48;
-    const infoIconY = height - 22;
+    const iconOffset = isMobile ? 35 : 48;
+    const infoIconX = padding.left + chartWidth / 2 + iconOffset;
+    const infoIconY = height - (isMobile ? 14 : 22);
     const tooltipText = "Model score is a 95%-CI estimation of the % of correct answers a human annotator would have attributed to the model. Answer correctness is based on both answer and justification.";
     
     const infoGroup = document.createElementNS(svgNS, "g");
@@ -945,7 +991,7 @@ function renderRankChart(data) {
     const infoCircle = document.createElementNS(svgNS, "circle");
     infoCircle.setAttribute("cx", infoIconX);
     infoCircle.setAttribute("cy", infoIconY);
-    infoCircle.setAttribute("r", "5");
+    infoCircle.setAttribute("r", isMobile ? "4" : "5");
     infoCircle.setAttribute("fill", "#4b5563");
     infoCircle.setAttribute("stroke", "#6b7280");
     infoCircle.setAttribute("stroke-width", "1");
@@ -954,10 +1000,10 @@ function renderRankChart(data) {
     // "i" text
     const infoText = document.createElementNS(svgNS, "text");
     infoText.setAttribute("x", infoIconX);
-    infoText.setAttribute("y", infoIconY + 2.5);
+    infoText.setAttribute("y", infoIconY + (isMobile ? 2 : 2.5));
     infoText.setAttribute("text-anchor", "middle");
     infoText.setAttribute("fill", "#e5e7eb");
-    infoText.setAttribute("font-size", "7px");
+    infoText.setAttribute("font-size", isMobile ? "6px" : "7px");
     infoText.setAttribute("font-weight", "700");
     infoText.setAttribute("font-style", "italic");
     infoText.setAttribute("font-family", "serif");
@@ -975,23 +1021,69 @@ function renderRankChart(data) {
         document.body.appendChild(axisTooltip);
     }
     
-    // Hover effect with tooltip
-    infoGroup.addEventListener("mouseenter", (e) => {
+    const showTooltip = (e) => {
         infoCircle.setAttribute("fill", "#2563eb");
         infoCircle.setAttribute("stroke", "#2563eb");
         infoText.setAttribute("fill", "#ffffff");
         
         // Position and show tooltip
         const rect = infoGroup.getBoundingClientRect();
-        axisTooltip.style.left = (rect.left + rect.width / 2) + 'px';
-        axisTooltip.style.top = (rect.top - 10) + 'px';
+        const tooltipGap = isMobile ? 18 : 12; // More gap on mobile
+        
+        let left = rect.left + rect.width / 2;
+        const screenWidth = window.innerWidth;
+        const tooltipWidth = isMobile ? 260 : 280;
+        const padding = 10;
+
+        // Boundary checks
+        if (left - tooltipWidth/2 < padding) {
+            left = tooltipWidth/2 + padding;
+        } else if (left + tooltipWidth/2 > screenWidth - padding) {
+            left = screenWidth - tooltipWidth/2 - padding;
+        }
+
+        axisTooltip.style.left = left + 'px';
+        axisTooltip.style.top = (rect.top - tooltipGap) + 'px';
         axisTooltip.style.display = 'block';
-    });
-    infoGroup.addEventListener("mouseleave", () => {
+        if (e) e.stopPropagation();
+    };
+
+    const hideTooltip = () => {
         infoCircle.setAttribute("fill", "#4b5563");
         infoCircle.setAttribute("stroke", "#6b7280");
         infoText.setAttribute("fill", "#e5e7eb");
         axisTooltip.style.display = 'none';
+    };
+
+    // Hover effect with tooltip
+    infoGroup.addEventListener("mouseenter", showTooltip);
+    infoGroup.addEventListener("mouseleave", hideTooltip);
+    
+    // Axis label interaction
+    xAxisLabel.addEventListener("mouseenter", showTooltip);
+    xAxisLabel.addEventListener("mouseleave", hideTooltip);
+
+    // Mobile/Click interaction
+    infoGroup.addEventListener("click", (e) => {
+        if (axisTooltip.style.display === 'block') {
+            hideTooltip();
+        } else {
+            showTooltip(e);
+        }
+    });
+    xAxisLabel.addEventListener("click", (e) => {
+        if (axisTooltip.style.display === 'block') {
+            hideTooltip();
+        } else {
+            showTooltip(e);
+        }
+    });
+    
+    // Hide when clicking elsewhere
+    document.addEventListener("click", (e) => {
+        if (!infoGroup.contains(e.target) && !xAxisLabel.contains(e.target)) {
+            hideTooltip();
+        }
     });
     
     svg.appendChild(infoGroup);
@@ -1004,6 +1096,7 @@ function renderRankChart(data) {
 function renderAnalytics() {
     if (state.activeTab !== 'analytics') return;
     
+    const isMobile = window.innerWidth <= 768;
     const splitData = state.cache[state.currentSplit];
     if (!splitData || !splitData.loaded) return;
 
@@ -1069,14 +1162,18 @@ function renderAnalytics() {
     // Find focus UI above the radar
     const focusUI = document.getElementById('radar-focus-ui');
 
-    const size = 800;
+    const size = 1000; // Fixed internal coordinate system
     const center = size / 2;
-    const radius = size * 0.38;
+    const radius = size * (isMobile ? 0.32 : 0.35); // Adjusted radius
     const svgNS = "http://www.w3.org/2000/svg";
 
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
     svg.setAttribute("class", "radar-chart-svg");
+    svg.style.width = "100%"; 
+    svg.style.height = "100%"; 
+    svg.style.aspectRatio = "1";
+    svg.style.maxWidth = isMobile ? "100%" : "850px";
 
     const angleStep = (Math.PI * 2) / sortedCategories.length;
 
@@ -1092,7 +1189,7 @@ function renderAnalytics() {
         const text = document.createElementNS(svgNS, "text");
         text.setAttribute("x", center + 5);
         text.setAttribute("y", center - (radius * level) - 5);
-        text.setAttribute("font-size", "14px");
+        text.setAttribute("font-size", isMobile ? "12px" : "16px"); // Larger internal font size
         text.setAttribute("fill", "var(--text-muted)");
         text.setAttribute("font-weight", "600");
         text.textContent = `${Math.round(level * 100)}%`;
@@ -1113,7 +1210,8 @@ function renderAnalytics() {
         axis.setAttribute("class", "radar-axis");
         svg.appendChild(axis);
 
-        const labelDist = radius + 70;
+        // Position labels further out but with more coordinate space
+        const labelDist = radius + (isMobile ? 50 : 80); 
         const lx = center + Math.cos(angle) * labelDist;
         const ly = center + Math.sin(angle) * labelDist;
         
@@ -1124,7 +1222,11 @@ function renderAnalytics() {
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("dominant-baseline", "middle");
         text.setAttribute("class", "radar-label");
-        text.style.cursor = 'pointer'; // Changed from 'help' to 'pointer'
+        text.style.cursor = 'pointer'; 
+        
+        // Use a relative font size based on our 1000px coordinate system
+        const baseFontSize = isMobile ? 16 : 24; 
+        text.style.fontSize = `${baseFontSize}px`;
 
         // Click interaction for category selection and scroll
         text.onclick = (e) => {
@@ -1155,7 +1257,20 @@ function renderAnalytics() {
                 }
                 tooltip.textContent = definition;
                 const rect = text.getBoundingClientRect();
-                tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+                
+                let left = rect.left + rect.width / 2;
+                const screenWidth = window.innerWidth;
+                const tooltipWidth = isMobile ? 260 : 280;
+                const padding = 10;
+
+                // Boundary checks
+                if (left - tooltipWidth/2 < padding) {
+                    left = tooltipWidth/2 + padding;
+                } else if (left + tooltipWidth/2 > screenWidth - padding) {
+                    left = screenWidth - tooltipWidth/2 - padding;
+                }
+
+                tooltip.style.left = left + 'px';
                 tooltip.style.top = (rect.top - 10) + 'px';
                 tooltip.style.display = 'block';
                 text.style.fill = 'var(--primary)';
@@ -1168,7 +1283,7 @@ function renderAnalytics() {
         }
 
         // Center vertically based on number of lines
-        const lineHeight = 22; 
+        const lineHeight = baseFontSize * 1.1; 
         const totalHeight = (words.length - 1) * lineHeight;
         const startOffset = -totalHeight / 2;
 
@@ -1191,11 +1306,11 @@ function renderAnalytics() {
         const stats = allModelsStats[modelName];
         if (!stats) return;
 
-        const provider = splitData.modelProviders.get(modelName) || 'default';
+        const provider = state.cache[state.currentSplit].modelProviders.get(modelName) || 'default';
         if (!providerModelCounts[provider]) providerModelCounts[provider] = 0;
         
         // Get number of total models for this provider to calculate step
-        const modelsOfThisProvider = modelsToDisplay.filter(m => splitData.modelProviders.get(m) === provider).length;
+        const modelsOfThisProvider = modelsToDisplay.filter(m => state.cache[state.currentSplit].modelProviders.get(m) === provider).length;
         const providerIdx = providerModelCounts[provider];
         providerModelCounts[provider]++;
 
@@ -1337,6 +1452,7 @@ function renderCategoryBarPlot() {
     const splitData = state.cache[state.currentSplit];
     if (!splitData || !splitData.loaded) return;
 
+    const isMobile = window.innerWidth <= 768;
     const cat = state.filters.selectedAnalyticsCategory;
     const container = document.getElementById('category-bar-plot-container');
     const descContainer = document.getElementById('category-description');
@@ -1425,15 +1541,25 @@ function renderCategoryBarPlot() {
         providerModelCounts[provider]++;
 
         const color = getModelColor(item.model, provider, providerIdx, modelsOfThisProviderMap[provider]);
+        const performance = isNaN(item.performance) ? 0 : item.performance;
         
         const barGroup = document.createElement('div');
         barGroup.className = 'category-bar-group';
         
+        // Truncate name for mobile if very long
+        let modelName = item.model;
+        if (isMobile && modelName.length > 30) {
+            modelName = modelName.substring(0, 27) + "...";
+        }
+        
+        const labelWidthDesktop = 250;
+        const styleAttr = isMobile ? '' : `style="width: ${labelWidthDesktop}px"`;
+        
         barGroup.innerHTML = `
-            <div class="category-bar-label" title="${item.model}">${item.model}</div>
+            <div class="category-bar-label" ${styleAttr} title="${item.model}">${modelName}</div>
             <div class="category-bar-wrapper">
-                <div class="category-bar-fill" style="width: ${item.performance}%; background-color: ${color}"></div>
-                <div class="category-bar-value">${item.performance.toFixed(1)}%</div>
+                <div class="category-bar-fill" style="width: ${performance}%; background: ${color}; min-width: 2px; height: 24px; opacity: 1;"></div>
+                <div class="category-bar-value">${performance.toFixed(1)}% ${isMobile ? '' : '(' + item.count + ')'}</div>
             </div>
         `;
         
@@ -1946,12 +2072,6 @@ function renderRiddleDetail(riddleId) {
             
             headerRow.appendChild(th);
         });
-        
-        // Fill up to 4 if needed? The TODO says "the 4 judges". 
-        // If there are fewer than 4, should I add empty columns?
-        // If there are more, should I show them all?
-        // I'll show what's there, but ensure we don't exceed 4 if that's a strict UI constraint.
-        // Actually, let's just show all available judges found in the data.
         
         const thHuman = document.createElement('th');
         thHuman.textContent = 'Human';
