@@ -6,7 +6,7 @@
 <a href="https://vienneraphael.github.io/layton-eval/" target="_blank">
     <img src="https://img.shields.io/badge/github%20pages-121013?style=for-the-badge&logo=github&logoColor=white" alt="GHP">
 <a href="https://www.linkedin.com/in/raphael-vienne/" target="_blank">
-    <img src="https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white" alt="GHP">
+    <img src="https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white" alt="LI">
 </a>
 </p>
 This repo contains all that you need to independently compute the performance metric for any kind of model on the [layton-eval](https://huggingface.co/datasets/rvienne/layton-eval) eval benchmark dataset.
