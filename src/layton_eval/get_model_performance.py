@@ -72,7 +72,7 @@ def get_model_performance(
     df_human: pl.DataFrame, df_judge: pl.DataFrame, field_name: str = "both_correct"
 ) -> dict[str, float]:
     ppi_point_estimates = []
-    for _ in range(1000):
+    for _ in range(10000):
         ppi_pointestimate = get_ppi_results(df_human, df_judge, field_name=field_name)
         ppi_point_estimates.append(ppi_pointestimate[0])
     ppi_ci_lower = np.percentile(ppi_point_estimates, 2.5)
