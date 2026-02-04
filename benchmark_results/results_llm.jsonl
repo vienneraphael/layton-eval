@@ -7,4 +7,4 @@
 {"rank":7,"rank_spread":"7 <--> 7","model":"claude-opus-4-5","score":70.2,"95% CI (±)":0.9,"provider":"anthropic"}
 {"rank":8,"rank_spread":"8 <--> 8","model":"moonshotai-Kimi-K2-Thinking","score":66.7,"95% CI (±)":1.7,"provider":"together"}
 {"rank":9,"rank_spread":"9 <--> 9","model":"mistral-large-2512","score":48.7,"95% CI (±)":1.4,"provider":"mistral"}
-{"rank":10,"rank_spread":"10 <--> 10","model":"Qwen-Qwen3-VL-235B-A22B-Instruct-FP8","score":39.0,"95% CI (±)":1.4,"provider":"doubleword"}
+{"rank":10,"rank_spread":"10 <--> 10","model":"qwen-qwen3-vl-235b-a22b-instruct-fp8","score":39.0,"95% CI (±)":1.4,"provider":"doubleword"}
