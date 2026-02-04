@@ -39,6 +39,19 @@ def main(judge_file_paths: list[str]):
         values=["is_answer_correct", "is_justification_correct", "both_correct"],
     )
     split = "llm" if "llm" in judge_file_paths[0] else "vlm"
+    mapping = {
+    'claude-opus-4-5_thinking_32k': 'claude-opus-4-5-20251101-thinking-32k',
+    'gpt-5-2': 'gpt-5.2-2025-12-11-high',
+    'claude-opus-4-5': 'claude-opus-4-5-20251101-no-thinking',
+    'gpt-5-1': 'gpt-5.1-2025-11-13-high',
+    'mistral-large-2512': 'mistral-large-2512',
+    'Qwen-Qwen3-235B-A22B-Instruct-2507-tput': 'qwen-qwen3-235b-a22b-instruct-2507-tput',
+    'Qwen-Qwen3-235B-A22B-Instruct-2507-FP8': 'qwen-qwen3-235b-a22b-instruct-2507-fp8',
+    'moonshotai-Kimi-K2-5': 'moonshotai-kimi-k2.5-thinking',
+    'moonshotai-Kimi-K2-Thinking': 'moonshotai-kimi-k2-thinking',
+    'gemini-3-flash-preview': 'gemini-3-flash-high',
+    'gemini-3-pro-preview': 'gemini-3-pro-high',
+}
     df_human = get_human_annotations_df(split=split)
     df_predictions = get_predictions_df(split=split)
     df_predictions.join(df_judge, left_on=["riddle_id", "model"], right_on=["riddle_id", "judged_model"], how="left").join(
@@ -64,7 +77,9 @@ def main(judge_file_paths: list[str]):
         "human_answer_correct",
         "human_justification_correct",
         "human_both_correct",
-    ).write_ndjson(f"ppi_{split}.jsonl")
+    ).with_columns(
+        pl.col("model").replace(mapping).alias("model"),
+    ).insert_column(3, pl.lit(0).alias("n_hints")).write_ndjson(f"ppi_{split}.jsonl")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
