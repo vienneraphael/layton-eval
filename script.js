@@ -20,6 +20,7 @@ const PROVIDER_COLORS = {
     'mistral': '#fcd53f',
     'meta': '#0668E1',
     'together': '#0055ff',
+    'doubleword': '#9ca3af',
     'default': '#6b7280'
 };
 
@@ -1860,6 +1861,7 @@ function getProviderFromModelName(modelName, modelProviders) {
     if (name.includes('mistral') || name.includes('mixtral')) return 'mistral';
     if (name.includes('llama') || name.includes('meta')) return 'meta';
     if (name.includes('qwen')) return 'together';
+    if (name.includes('doubleword')) return 'doubleword';
     return 'default';
 }
 
