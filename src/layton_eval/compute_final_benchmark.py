@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import polars as pl
 from ppi_py import ppi_mean_pointestimate
+from tqdm import tqdm
 
 
 def get_ppi_inputs(df_ppi: pl.DataFrame, provider: str, model: str, field_name="both_correct"):
@@ -48,7 +49,11 @@ def get_benchmark_results(df_ppi: pl.DataFrame, field_name="both_correct") -> pl
         "score": [],
         "95% CI (±)": [],
     }
-    for provider, model in df_ppi.select("provider", "model").unique().iter_rows():
+    for provider, model in tqdm(
+        df_ppi.select("provider", "model").unique().iter_rows(),
+        total=df_ppi.select("provider", "model").unique().height,
+        desc="Computing benchmark results"
+    ):
         ppi_point_estimates = []
         for _ in range(10_000):
             ppi_pointestimate = get_ppi_results(df_ppi, provider, model, field_name=field_name)
