@@ -72,6 +72,9 @@ svg text {
     background-color: var(--bg-surface);
     border-bottom: 1px solid var(--border-color);
     padding: 1rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-content {
@@ -786,6 +789,13 @@ svg {
     margin-bottom: 2rem;
     flex-wrap: wrap;
     gap: 1.5rem;
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-surface);
+    z-index: 10;
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+    margin-top: -2rem;
 }
 
 .section-title {
@@ -2205,6 +2215,8 @@ span.status-incorrect {
         align-items: flex-start;
         gap: 1rem;
         margin-bottom: 1.5rem;
+        padding-top: 1.5rem;
+        margin-top: -1.5rem;
     }
 
     #category-selector-container {
