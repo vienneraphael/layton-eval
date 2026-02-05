@@ -27,7 +27,7 @@ A second motivation is the classical trade-off between:
 - **Scalability:** automated scoring is fast and cheap.
 - **Ground truth:** human scoring is accurate but costly and slow.
 
-This can be viewed as an analogue of the *bias–variance trade-off*. Purely human evaluation tends to have *lower bias* (closer to the target notion of correctness) but *higher variance* because only a small number of items can be labeled (and annotators disagree). Purely automated judging tends to have *lower variance* (large $n$ is inexpensive) but can introduce *systematic bias* from judge failure modes (e.g., self-preference, style bias). Prediction-Powered Inference (PPI) aims to strike a balance: use the proxy to reduce variance by scoring many items, and use a gold set to estimate and correct the proxy’s bias.
+This can be viewed as an analogue of the *bias–variance trade-off*. Purely human evaluation tends to have *lower bias* (closer to the target notion of correctness) but *higher variance* because only a small number of items can be labeled (and annotators disagree). Purely automated judging tends to have *lower variance* (large `n` is inexpensive) but can introduce *systematic bias* from judge failure modes (e.g., self-preference, style bias). Prediction-Powered Inference (PPI) aims to strike a balance: use the proxy to reduce variance by scoring many items, and use a gold set to estimate and correct the proxy’s bias.
 
 Automated judging is known to be fallible, especially on multi-step reasoning tasks where plausible explanations can conceal subtle hallucinations. Relatedly, rigorous evaluation protocols for RAG systems in due diligence settings combine human annotation with LLM-judge labels and PPI-style calibration.
 
@@ -37,9 +37,9 @@ Automated judging is known to be fallible, especially on multi-step reasoning ta
 
 ### layton-eval dataset and task
 
-**layton-eval** uses Professor Layton-style riddles—multi-step logic puzzles—as benchmark items.
+**layton-eval** uses Professor Layton-style riddles and multi-step logic puzzles as benchmark items.
 
-The **layton-eval** dataset was obtained by scraping the Layton Wiki at Fandom (layton.fandom.com/wiki). This work uses material from the Professor Layton Wiki at Fandom and all subsequent datasets are licensed under the Creative Commons Attribution–ShareAlike License. The dataset is available on Hugging Face as `rvienne/layton-eval`.
+The **layton-eval** dataset was obtained by scraping the Layton Wiki at Fandom (layton.fandom.com/wiki). This work uses material from the Professor Layton Wiki at Fandom and all subsequent datasets are licensed under the Creative Commons Attribution–ShareAlike License. The dataset is available on Hugging Face as [`rvienne/layton-eval`](https://huggingface.co/datasets/rvienne/layton-eval).
 
 The raw scraped material then underwent substantial manual and automated processing, including:
 
@@ -77,19 +77,19 @@ Even frontier models used as judges are imperfect proxies for human reasoning. C
 
 At a high level, PPI works by:
 
-1. **Scoring at scale with a proxy:** use the proxy to label many examples, which greatly reduces variance because we can afford a large $n$.
+1. **Scoring at scale with a proxy:** use the proxy to label many examples, which greatly reduces variance because we can afford a large `n`.
 2. **Calibrating with a gold set:** additionally collect a smaller set of human labels, and estimate the proxy’s *systematic error* (bias) by comparing proxy vs. human labels on that overlap.
 3. **Rectifying the proxy estimate:** adjust the proxy-based estimate using the estimated error, producing an estimator that remains anchored to human judgment while retaining much of the proxy’s sample-efficiency.
 
 This is a good fit for **layton-eval** because (i) fully human evaluation of hundreds of riddles across many models is prohibitively expensive, but (ii) purely automated judging is known to be systematically biased on subtle multi-step reasoning. PPI explicitly embraces the jury as a *noisy measurement device* and uses the gold set to correct it, yielding scores that are both scalable (proxy-labeled large set) and statistically grounded in human correctness.
 
-All artifacts needed to recompute the PPI estimates (human annotations and per-judge outputs for each prediction) are released as a companion dataset on Hugging Face as `layton-eval-ppi`.
+All artifacts needed to recompute the PPI estimates (human annotations and per-judge outputs for each prediction) are released as a companion dataset on Hugging Face as [`rvienne/layton-eval-ppi`](https://huggingface.co/datasets/rvienne/layton-eval-ppi).
 
 ### Gold set calibration
 
-We collect a smaller human-annotated **gold set**, with an annotation budget set so that the total volume of annotations is approximately $\sim 3\times$ the number of riddles in each split. Predictions were selected for human annotation via stratified sampling over **riddle ID**, **provider**, and **model within provider**, to ensure broad coverage and avoid over-representing any single model family.
+We collect a smaller human-annotated **gold set**, with an annotation budget set so that the total volume of annotations is approximately `3x` the number of riddles in each split. Predictions were selected for human annotation via stratified sampling over **riddle ID**, **provider**, and **model within provider**, to ensure broad coverage and avoid over-representing any single model family.
 
-We compute PPI *independently* on each split (`LLM` and `VLM`). Human labels are pure booleans (cast to floats $0.0$ or $1.0$), while jury scores are discrete-valued averages in $[0,1]$. For gold items, we compute residuals between these values (the calibration “delta”).
+We compute PPI *independently* on each split (`LLM` and `VLM`). Human labels are pure booleans (cast to floats `0.0` or `1.0`), while jury scores are discrete-valued averages in `[0,1]`. For gold items, we compute residuals between these values (the calibration “delta”).
 
 ### Rectified benchmark scoring
 
@@ -108,9 +108,9 @@ By default, the jury is `{gpt-5.1, gemini-3-pro, claude-opus-4.5}`. To mitigate 
 
 ### Jury score (discrete average of boolean correctness)
 
-Each judge produces a structured verdict indicating whether (i) the final *answer* is correct and (ii) the *justification* is correct (both booleans). We define the judge-level correctness indicator as their boolean product, i.e., *answer* $\wedge$ *justification*.
+Each judge produces a structured verdict indicating whether (i) the final *answer* is correct and (ii) the *justification* is correct (both booleans). We define the judge-level correctness indicator as their boolean product, i.e., `answer && justification`.
 
-The final jury score for an item is the average of this indicator across the 3 judges, yielding a floating-point value with discrete support (e.g., $0$, $1/3$, $2/3$, $1$).
+The final jury score for an item is the average of this indicator across the 3 judges, yielding a floating-point value with discrete support (e.g., `0`, `1/3`, `2/3`, `1`).
 
 ### Stratified bootstrapping
 
@@ -125,8 +125,8 @@ We address this with a stratified bootstrap procedure:
 From this distribution we report:
 
 - A **95% confidence interval** (CI) by taking the 2.5% and 97.5% percentiles of the rectified-score distribution,
-- A midpoint **point estimate** $P$ defined as the center of that interval, and
-- The CI **half-width** $W$ such that, at 95% certainty, the true rectified performance lies in $[P - W,\, P + W]$.
+- A midpoint **point estimate** `P` defined as the center of that interval, and
+- The CI **half-width** `W` such that, at 95% certainty, the true rectified performance lies in `[P - W,\, P + W]`.
 
 We compute **rank spread** afterwards, once we obtain such a distribution for each candidate model, by comparing worst-case and best-case ranking scenarios induced by these 95% intervals.
 
@@ -180,7 +180,7 @@ However, we also suspect an input-level and architectural component: Nintendo DS
 
 To facilitate exploration beyond the aggregate leaderboard, we provide a web interface to browse the full evaluation data, including overall results, breakdowns by riddle category, and per-riddle results:
 
-- vienneraphael.github.io/layton-eval/
+- [vienneraphael.github.io/layton-eval/](vienneraphael.github.io/layton-eval/)
 
 ---
 
@@ -188,13 +188,13 @@ To facilitate exploration beyond the aggregate leaderboard, we provide a web int
 
 All code, prompts, and evaluation scripts needed to reproduce the experiments and to self-report model performance are available in the **layton-eval** repository:
 
-- github.com/vienneraphael/layton-eval
+- [github.com/vienneraphael/layton-eval](github.com/vienneraphael/layton-eval)
 
 ---
 
 ## Cost Report
 
-We report approximate inference costs incurred during evaluation (including the cost of judging where applicable). The costs below are the *batched* costs. We relied on providers’ batch APIs; for the *estimated unbatched* costs, we assume a default 50% batch economy (i.e., batched cost is $\approx 50\%$ of unbatched cost), and a 66% batch economy for Doubleword.
+We report approximate inference costs incurred during evaluation (including the cost of judging where applicable). The costs below are the *batched* costs. We relied on providers’ batch APIs; for the *estimated unbatched* costs, we assume a default 50% batch economy (i.e., batched cost is ~50% of unbatched cost), and a 66% batch economy for Doubleword.
 
 | Provider    | Batched Cost (USD) | Est. Unbatched (USD) | Notes                               |
 |-------------|-------------------:|----------------------:|-------------------------------------|
@@ -210,7 +210,7 @@ We report approximate inference costs incurred during evaluation (including the 
 
 ## Conclusion
 
-**layton-eval** probes lateral, puzzle-like reasoning—in both text-only (`LLM`) and vision-based (`VLM`) settings—and combines scalable automated judging with Prediction-Powered Inference (PPI) to remain anchored to human correctness.
+**layton-eval** probes lateral, puzzle-like reasoning in both text-only (`LLM`) and vision-based (`VLM`) settings and combines scalable automated judging with Prediction-Powered Inference (PPI) to remain anchored to human correctness.
 
 Our results indicate that there is still substantial room for improvement on both splits: even top frontier models systematically fail some riddle categories, suggesting that key forms of non-linear reasoning and robust justification are not yet reliably acquired.
 
