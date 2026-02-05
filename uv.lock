@@ -69,8 +69,8 @@ wheels = [
 
 [[package]]
 name = "batchling"
-version = "0.0.14"
-source = { directory = "../batchling" }
+version = "0.0.15"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
@@ -81,29 +81,9 @@ dependencies = [
     { name = "structlog" },
     { name = "typer" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "click", specifier = ">=8.3.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "platformdirs", specifier = ">=4.5.0" },
-    { name = "pydantic", specifier = ">=2.12.3" },
-    { name = "python-dotenv", specifier = ">=1.1.1" },
-    { name = "sqlalchemy", specifier = ">=2.0.44" },
-    { name = "structlog", specifier = ">=25.5.0" },
-    { name = "typer", specifier = ">=0.20.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage", specifier = ">=7.11.0" },
-    { name = "ipykernel", specifier = ">=7.0.1" },
-    { name = "prek", specifier = ">=0.2.10" },
-    { name = "pyinstrument", specifier = ">=5.1.1" },
-    { name = "pytest", specifier = ">=8.4.2" },
-    { name = "python-dotenv", specifier = ">=1.1.1" },
-    { name = "respx", specifier = ">=0.22.0" },
-    { name = "ruff", specifier = ">=0.14.2" },
+sdist = { url = "https://files.pythonhosted.org/packages/95/68/02ffaa99c54c884367a349ffa68c44067145d43745bd55a0d475cc5414a7/batchling-0.0.15.tar.gz", hash = "sha256:a7743929024d79918ae458041fb0b81e1c3c6e7ff5699c1f473ac7aa2b35f245", size = 19628, upload-time = "2026-02-05T05:39:23.8Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/72/59/c2866f159e7941b67c6d829cfb6487bf8418b9e434cfdfd358655bad5708/batchling-0.0.15-py3-none-any.whl", hash = "sha256:75e489eef09b63bcc775217070e11ee2b940aa45049f971b67fb73888f1ff1cb", size = 32842, upload-time = "2026-02-05T05:39:22.903Z" },
 ]
 
 [[package]]
@@ -738,7 +718,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "batchling", directory = "../batchling" },
+    { name = "batchling", specifier = "==0.0.15" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "json-repair", specifier = ">=0.55.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },

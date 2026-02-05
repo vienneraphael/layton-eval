@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "batchling",
+    "batchling==0.0.15",
     "ipykernel>=6.29.5",
     "json-repair>=0.55.0",
     "matplotlib>=3.10.7",
@@ -29,9 +29,6 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 packages = ["src/batchling"]
-
-[tool.uv.sources]
-batchling = { path = "../batchling" }
 
 [tool.bandit]
 skips = ["B311"]
