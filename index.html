@@ -46,6 +46,7 @@
                         <button class="nav-btn active" data-tab="leaderboard">Leaderboard</button>
                         <button class="nav-btn" data-tab="analytics">Analytics</button>
                         <button class="nav-btn" data-tab="visualizer">Visualizer</button>
+                        <button class="nav-btn" data-tab="paper">Paper</button>
                     </nav>
                 </div>
             </div>
@@ -168,6 +169,26 @@
                     </div>
                     <div id="riddle-grid" class="riddle-grid">
                         <!-- Cards populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: Paper -->
+            <section id="paper" class="tab-pane">
+                <div class="paper-container">
+                    <div class="paper-header">
+                        <h2 class="paper-title">Technical Report</h2>
+                        <a href="technical_report.pdf" download="technical_report.pdf" class="btn-download">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="margin-right: 0.5rem;">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                            </svg>
+                            Download PDF
+                        </a>
+                    </div>
+                    <div class="paper-content-wrapper">
+                        <div id="paper-content" class="paper-content markdown-content">
+                            <!-- Markdown content will be loaded here -->
+                        </div>
                     </div>
                 </div>
             </section>

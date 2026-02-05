@@ -605,6 +605,8 @@ function switchTab(tabId) {
         renderLeaderboard(); // Re-render to ensure chart size is correct
     } else if (tabId === 'analytics') {
         renderAnalytics();
+    } else if (tabId === 'paper') {
+        loadPaperContent();
     }
 }
 
@@ -2317,4 +2319,35 @@ function renderCheckCross(val) {
     if (val === true) return '<span class="status-icon status-check" style="color:#3fb950 !important; font-weight:bold;">✓</span>';
     if (val === false) return '<span class="status-icon status-cross" style="color:#f85149 !important; font-weight:bold;">✗</span>';
     return '<span class="status-icon status-empty">—</span>';
+}
+
+// --- Paper Content Logic ---
+
+async function loadPaperContent() {
+    const paperContentEl = document.getElementById('paper-content');
+    if (!paperContentEl) return;
+
+    // Check if already loaded
+    if (paperContentEl.dataset.loaded === 'true') return;
+
+    try {
+        const response = await fetch('technical_report.md');
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        const markdownText = await response.text();
+        
+        // Render markdown using marked library (already included)
+        if (typeof marked !== 'undefined') {
+            paperContentEl.innerHTML = marked.parse(markdownText);
+            paperContentEl.dataset.loaded = 'true';
+        } else {
+            // Fallback: display as plain text if marked is not available
+            paperContentEl.textContent = markdownText;
+            paperContentEl.dataset.loaded = 'true';
+        }
+    } catch (e) {
+        console.error('Failed to load paper content:', e);
+        paperContentEl.innerHTML = '<div class="empty-state">Failed to load technical report. Please try again later.</div>';
+    }
 }
